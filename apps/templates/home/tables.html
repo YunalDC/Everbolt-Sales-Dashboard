@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Sri Lanka Map{% endblock %}
+
+{% block stylesheets %}
+<style>
+  #map {
+    height: 500px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    font-size: 1.25rem;
+    font-weight: bold;
+    padding-bottom: 0.5rem;
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-plain">
+        <div class="card-header">🗺️ Interactive Map of Sri Lanka</div>
+        <div class="card-body">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  function initMap() {
+    const sriLanka = { lat: 7.8731, lng: 80.7718 };
+
+    const map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 7,
+      center: sriLanka,
+    });
+
+    const marker = new google.maps.Marker({
+      position: sriLanka,
+      map: map,
+      title: "Center of Sri Lanka",
+    });
+  }
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCisGk-rKNr8MnD_KUPMz-jAQ1bl2l6y_E&callback=initMap">
+</script>
+{% endblock javascripts %}
+

@@ -1,0 +1,168 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Admin Panel{% endblock %}
+
+{% block stylesheets %}
+<style>
+  /* Container */
+  .dashboard-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 5rem 2rem 2rem; 
+    margin-left: 240px;
+  }
+
+  /* Title */
+  .dashboard-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #333;
+  }
+
+  /* Cards Grid (2x2 layout) */
+  .admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .admin-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: #fff;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+  }
+
+  .admin-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .card-purple    { background: #c400c4; }
+  .card-green     { background: #0B9444; }
+  .card-orange    { background: #f98e4b; }
+  .card-pink      { background: #ff5e9c; }
+  .card-red       { background: #ff0000; }
+
+  .admin-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+  }
+
+  .admin-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.2rem;
+  }
+
+  .admin-card-footer a {
+    color: #fff;
+    font-weight: 500;
+    text-decoration: underline;
+  }
+
+  /* Buttons */
+  .btn-custom {
+    display: inline-block;
+    padding: 0.5rem 1.1rem;
+    border-radius: 6px;
+    background-color: #087A38;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    transition: 0.2s ease;
+  }
+
+  .btn-custom:hover {
+    background-color: #05642c;
+  }
+
+  /* Form Styling */
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-control:focus {
+    border-color: #0B9444;
+    outline: none;
+    box-shadow: 0 0 0 0.15rem rgba(11, 148, 68, 0.25);
+  }
+
+  /* Responsive Fixes */
+  @media (max-width: 768px) {
+    .dashboard-container {
+      padding: 1.5rem 1rem;
+    }
+
+    .dashboard-title {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="dashboard-container">
+  <h2 class="dashboard-title">🛠 Admin Dashboard</h2>
+
+  <div class="admin-grid">
+    <div class="admin-card card-purple">
+      <div class="admin-card-title">📤 Upload Invoices</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_invoice' %}">Go to Upload</a>
+        <i class="fas fa-upload"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-green">
+      <div class="admin-card-title">⚙️ Manage Products</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_product' %}">Go to Collection</a>
+        <i class="fas fa-cogs"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-orange">
+      <div class="admin-card-title">🔔 Post Notification</div>
+      <div class="admin-card-footer">
+        <a href="#">Post</a>
+        <i class="fas fa-bell"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-pink">
+      <div class="admin-card-title">📝 Assign Tasks</div>
+      <div class="admin-card-footer">
+        <a href="#">Assign</a>
+        <i class="fas fa-tasks"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-red">
+      <div class="admin-card-title">📤 Upload Collection</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_collection' %}">Go to Collection</a>
+        <i class="fas fa-upload"></i>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

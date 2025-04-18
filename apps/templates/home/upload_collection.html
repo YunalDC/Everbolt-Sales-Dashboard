@@ -1,0 +1,130 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Upload Aged Receivables{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .main-dashboard-container {
+    max-width: 1100px;
+    margin-left: 250px;
+    padding: 4rem 2rem;
+  }
+
+  .upload-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.03);
+    padding: 2rem;
+  }
+
+  .upload-heading {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #0B9444;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .btn-green {
+    background-color: #0B9444;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 5px;
+    border: none;
+  }
+
+  .btn-green:hover {
+    background-color: #087A38;
+  }
+
+  .btn-back {
+    background-color: #6c757d;
+    color: white;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-back:hover {
+    background-color: #5a6268;
+    color: white;
+  }
+
+  .results-list {
+    margin-top: 1.5rem;
+  }
+
+  .results-list li {
+    font-size: 0.9rem;
+  }
+
+  #loading-spinner {
+    display: none;
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="main-dashboard-container">
+  <div class="upload-card">
+
+    <a href="{% url 'admin_panel' %}" class="btn-back">← Back to Admin Panel</a>
+
+    <h2 class="upload-heading">📊 Upload Aged Receivables</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="upload-form">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="excel_file" class="form-label"><strong>Choose Excel File (.xlsx):</strong></label>
+        <input type="file" name="excel_file" id="excel_file" accept=".xlsx" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-green">Upload Collection</button>
+    </form>
+
+    <div id="loading-spinner">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Uploading...</span>
+      </div>
+      <p class="small mt-2">Uploading... Please wait.</p>
+    </div>
+
+    {% if results %}
+      <ul class="results-list list-group mt-4">
+        {% for result in results %}
+          <li class="list-group-item">{{ result }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  document.getElementById("upload-form")?.addEventListener("submit", function () {
+    document.querySelector(".btn-green").disabled = true;
+    document.getElementById("loading-spinner").style.display = "block";
+  });
+</script>
+{% endblock javascripts %}

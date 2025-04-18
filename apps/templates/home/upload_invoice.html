@@ -1,0 +1,160 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Upload Invoices{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .main-dashboard-container {
+    max-width: 1100px;
+    margin-left: 250px;
+    padding: 4rem 2rem;
+  }
+
+  .upload-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.03);
+    padding: 2rem;
+  }
+
+  .upload-heading {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #c400c4;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .btn-red, .btn-green {
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 5px;
+    border: none;
+  }
+
+  .btn-red {
+    background-color: red;
+  }
+
+  .btn-red:hover {
+    background-color: darkred;
+  }
+
+  .btn-green {
+    background-color: #0B9444;
+  }
+
+  .btn-green:hover {
+    background-color: #087A38;
+  }
+
+  .btn-back {
+    background-color: #6c757d;
+    color: white;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-back:hover {
+    background-color: #5a6268;
+    color: white;
+  }
+
+  .form-label {
+    font-weight: 600;
+  }
+
+  .results-list {
+    margin-top: 1.5rem;
+  }
+
+  .results-list li {
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .main-dashboard-container {
+      margin-left: 0;
+      padding: 1.5rem 1rem;
+    }
+
+    .upload-heading {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="main-dashboard-container">
+  <div class="upload-card">
+
+    <a href="{% url 'admin_panel' %}" class="btn-back">← Back to Admin Panel</a>
+
+    <h2 class="upload-heading">📤 Upload Invoices</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- PDF Upload -->
+    <form method="post" enctype="multipart/form-data" class="mb-4" id="upload-form-pdf">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="pdf_files" class="form-label">📄 Upload PDF Invoices</label>
+        <input type="file" name="pdf_files" id="pdf_files" multiple accept=".pdf" class="form-control" required>
+      </div>
+      <button type="submit" id="submit-pdf" class="btn btn-red">Upload PDF</button>
+    </form>
+
+    <!-- Excel Upload -->
+    <form method="post" enctype="multipart/form-data" class="mb-4">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="excel_file" class="form-label">📥 Upload Excel File</label>
+        <input type="file" name="excel_file" accept=".xlsx" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-green">Upload Excel</button>
+    </form>
+
+    <!-- Spinner -->
+    <div id="loading-spinner" class="text-center mt-3" style="display: none;">
+      <div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Uploading...</span></div>
+      <p class="small mt-2">Uploading... Please wait.</p>
+    </div>
+
+    <!-- Results -->
+    {% if results %}
+    <ul class="results-list list-group mt-4">
+      {% for result in results %}
+      <li class="list-group-item">{{ result }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  // Spinner when PDF upload form is submitted
+  document.getElementById('upload-form-pdf')?.addEventListener('submit', function () {
+    const btn = document.getElementById('submit-pdf');
+    const spinner = document.getElementById('loading-spinner');
+    btn.disabled = true;
+    btn.innerHTML = 'Uploading...';
+    spinner.style.display = 'block';
+  });
+</script>
+{% endblock javascripts %}

@@ -1,0 +1,100 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Invoices View{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .main-dashboard-container {
+    max-width: 1200px;
+    margin-left: 250px;
+    padding: 6rem 2rem 2rem;
+  }
+
+  .search-section,
+  .invoice-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.03);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-control:focus {
+    border-color: #0B9444 !important;
+    box-shadow: 0 0 0 0.15rem rgba(11, 148, 68, 0.25) !important;
+  }
+
+  .table th {
+    background-color: #0B9444 !important;
+    color: white !important;
+    text-align: center;
+  }
+
+  .table td {
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .main-dashboard-container {
+      margin-left: 0;
+      padding: 5rem 1rem 2rem;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="main-dashboard-container">
+
+  <div class="search-section">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search invoices by number or client name...">
+  </div>
+
+  <div class="invoice-section">
+    <h6 class="mb-3">📑 Latest Invoices</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead>
+          <tr>
+            <th>INVOICE #</th>
+            <th>CLIENT</th>
+            <th>DATE</th>
+            <th>TOTAL</th>
+            <th>PDF</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceTable">
+          {% for invoice in invoices %}
+          <tr>
+            <td>{{ invoice.invoice_number }}</td>
+            <td>{{ invoice.client }}</td>
+            <td>{{ invoice.invoice_date|date:"F d, Y" }}</td>
+            <td>Rs. {{ invoice.total|floatformat:2 }}</td>
+            <td><span class="text-muted">N/A</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">No invoices found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  document.getElementById('searchInput')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#invoiceTable tr');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(query) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock javascripts %}

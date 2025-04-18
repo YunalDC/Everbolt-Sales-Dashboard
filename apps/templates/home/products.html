@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Product Inventory{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .main-dashboard-container {
+    max-width: 1200px;
+    margin-left: 250px;
+    padding: 6rem 2rem 2rem;
+  }
+
+  .search-section,
+  .product-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.03);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-control:focus {
+    border-color: #0B9444 !important;
+    box-shadow: 0 0 0 0.15rem rgba(11, 148, 68, 0.25) !important;
+  }
+
+  .table th {
+    background-color: #0B9444 !important;
+    color: white !important;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  .table td {
+    text-align: center;
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 768px) {
+    .main-dashboard-container {
+      margin-left: 0;
+      padding: 5rem 1rem 2rem;
+    }
+
+    .table th,
+    .table td {
+      font-size: 0.8rem;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="main-dashboard-container">
+
+  <div class="search-section">
+    <form method="get">
+      <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by part number or name...">
+    </form>
+  </div>
+
+  <div class="product-section">
+    <h6 class="mb-3">📦 Product Inventory</h6>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Part Number</th>
+            <th>Name</th>
+            <th>Brand</th>
+            <th>Quantity</th>
+            <th>Unit</th>
+            <th>Sales Price (Rs.)</th>
+          </tr>
+        </thead>
+        <tbody id="productTable">
+          {% for product in page_obj %}
+          <tr>
+            <td>{{ product.part_number }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.brand }}</td>
+            <td>{{ product.quantity_on_hand }}</td>
+            <td>{{ product.unit_of_measure }}</td>
+            <td>Rs. {{ product.sales_price|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted">No products found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-center mt-3">
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page=1">First</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">‹</a></li>
+          {% endif %}
+          <li class="page-item disabled"><a class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">›</a></li>
+            <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}">Last</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  // Optional: Smooth scrolling to top after pagination
+  const paginationLinks = document.querySelectorAll(".pagination a");
+  paginationLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+{% endblock javascripts %}

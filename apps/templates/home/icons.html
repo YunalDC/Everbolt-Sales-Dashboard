@@ -1,0 +1,152 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Mark Visit {% endblock %}
+
+{% block stylesheets %}
+<style>
+  button.btn-green,
+  .btn-green {
+    background: none !important;
+    background-color: #0B9444 !important;
+    color: #fff !important;
+    border: none !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  .btn.btn-green:hover {
+    background-color: #087A38 !important;
+    color: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  .submit-btn {
+    width: 200px;
+    max-width: 100%;
+  }
+
+  .visit-form-card {
+    max-width: 1200px;
+    margin: auto;
+    padding: 2rem;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+  }
+
+  .visit-logo {
+    display: block;
+    margin: auto;
+    max-height: 80px;
+  }
+
+  .visit-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 1rem 0 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .visit-form-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .visit-form-row > * {
+      flex: 1;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 0.40rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      margin-bottom: 1.2rem;
+    }
+  }
+
+  .alert {
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+  <div class="visit-form-card">
+    <img src="{{ ASSETS_ROOT }}/img/everbolt.png" class="visit-logo" alt="Everpulse Logo">
+    <h2 class="visit-title">Mark Your Visit:</h2>
+
+    {% if success %}
+    <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+      ✅ Visit successfully submitted!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% elif success == False %}
+    <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+      ❌ Something went wrong. Please try again.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'mark_visit' %}">
+      {% csrf_token %}
+
+      <div class="visit-form-row mb-3">
+        <div class="form-group">
+          <input type="date" name="visit_date" class="form-control" placeholder="Date">
+        </div>
+        <div class="form-group">
+          <select name="sales_officer" class="form-control">
+            <option value="">Select Sales Officer</option>
+            <option value="ramith_thiwanka">Ramith Thiwanka</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="text" name="company" class="form-control" placeholder="Search or Type Company">
+        </div>
+      </div>
+
+      <div class="visit-form-row mb-3">
+        <div class="form-group">
+          <select name="visit_type" class="form-control">
+            <option value="">Select Visit Type</option>
+            <option value="ramith_thiwanka">Technical Visit</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="text" name="visit_details" class="form-control" placeholder="Visit Details">
+        </div>
+        <div class="form-group">
+          <input type="text" name="remarks" class="form-control" placeholder="Remarks">
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-green submit-btn">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  // Auto-close alert in 3 seconds
+  setTimeout(() => {
+    const alert = document.querySelector(".alert");
+    if (alert) {
+      alert.classList.remove("show");
+      alert.classList.add("hide");
+    }
+  }, 3000);
+</script>
+{% endblock javascripts %}

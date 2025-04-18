@@ -1,0 +1,294 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block stylesheets %}
+<style>
+  .top-customers-card {
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .top-customers-card .card-body {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    height: 100%;
+  }
+
+  .top-customers-scrollable {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 480px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+  }
+
+  .top-customers-scrollable::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .top-customers-scrollable::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+  }
+
+  .top-customers-card table {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+  }
+
+  .top-customers-card th,
+  .top-customers-card td {
+    padding: 4px 6px;
+    vertical-align: middle;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    font-size: 0.75rem;
+    border-top: 1px solid #eaeaea;
+    margin-top: auto;
+  }
+
+  canvas#brandSalesChart {
+    max-width: 100%;
+  }
+
+  .chart-area {
+    overflow-x: auto;
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="content">
+  <!-- Performance Chart -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card card-chart">
+        <div class="card-header">
+          <div class="row">
+            <div class="col-sm-6 text-left">
+              <h5 class="card-category">Total Shipments</h5>
+              <h2 class="card-title">Performance</h2>
+            </div>
+            <div class="col-sm-6">
+              <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
+                <label class="btn btn-sm btn-primary btn-simple active" id="0">
+                  <input type="radio" name="options" checked>
+                  <span class="d-none d-sm-block">Accounts</span>
+                  <span class="d-block d-sm-none"><i class="tim-icons icon-single-02"></i></span>
+                </label>
+                <label class="btn btn-sm btn-primary btn-simple" id="1">
+                  <input type="radio" name="options">
+                  <span class="d-none d-sm-block">Purchases</span>
+                  <span class="d-block d-sm-none"><i class="tim-icons icon-gift-2"></i></span>
+                </label>
+                <label class="btn btn-sm btn-primary btn-simple" id="2">
+                  <input type="radio" name="options">
+                  <span class="d-none d-sm-block">Sessions</span>
+                  <span class="d-block d-sm-none"><i class="tim-icons icon-tap-02"></i></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-area">
+            <canvas id="chartBig1"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand Revenue Chart -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card card-chart">
+        <div class="card-header">
+          <h5 class="card-category">Brand Sales</h5>
+          <h3 class="card-title"><i class="tim-icons icon-chart-bar-32 text-success"></i> Brand Revenue</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-area" style="overflow-x: auto;">
+            <canvas id="brandSalesChart" height="160"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card card-chart">
+        <div class="card-header">
+          <h5 class="card-category">Total Shipments</h5>
+          <h3 class="card-title"><i class="tim-icons icon-bell-55 text-primary"></i> 763,215</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-area"><canvas id="chartLinePurple"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card card-chart">
+        <div class="card-header">
+          <h5 class="card-category">Completed Tasks</h5>
+          <h3 class="card-title"><i class="tim-icons icon-send text-success"></i> 12,100K</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-area"><canvas id="chartLineGreen"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables -->
+  <div class="row align-items-stretch">
+    <!-- Task List -->
+    <div class="col-lg-6 col-md-12 d-flex">
+      <div class="card w-100 h-100 d-flex flex-column">
+        <div class="card-header">
+          <h4 class="card-title">Tasks</h4>
+        </div>
+        <div class="card-body flex-grow-1">
+          <div class="table-full-width table-responsive h-100">
+            <table class="table">
+              <tbody>
+                <!-- Example Task -->
+                <tr>
+                  <td>
+                    <div class="form-check">
+                      <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox">
+                        <span class="form-check-sign"><span class="check"></span></span>
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="title">Update the Documentation</p>
+                    <p class="text-muted">Dwuamish Head, Seattle, WA 8:47 AM</p>
+                  </td>
+                  <td class="td-actions text-right">
+                    <button type="button" rel="tooltip" title="Edit Task" class="btn btn-link">
+                      <i class="tim-icons icon-pencil"></i>
+                    </button>
+                  </td>
+                </tr>
+                <!-- Add more tasks dynamically if needed -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="col-lg-6 col-md-12 d-flex">
+      <div class="card top-customers-card w-100 h-100 d-flex flex-column">
+        <div class="card-header">
+          <h4 class="card-title mb-0">
+            {% if is_salesperson %}
+              Your Top Customers
+            {% else %}
+              Company-Wide Top Customers
+            {% endif %}
+          </h4>
+        </div>
+        <div class="card-body flex-grow-1">
+          <div class="table-responsive top-customers-scrollable">
+            <table class="table table-sm table-bordered mb-0">
+              <thead class="text-primary">
+                <tr>
+                  <th>CUSTOMER</th>
+                  <th>ORDERS</th>
+                  <th>REVENUE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if top_clients %}
+                  {% for client in top_clients %}
+                  <tr>
+                    <td>{{ client.client }}</td>
+                    <td>{{ client.order_count }}</td>
+                    <td>Rs {{ client.total_revenue|floatformat:2 }}</td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted">No customer data available.</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+          <div class="summary-row">
+            <span><strong>Total Invoices:</strong> {{ total_invoices }}</span>
+            <span><strong>Total Revenue:</strong> Rs {{ total_amount|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+  $(document).ready(function () {
+    demo.initDashboardPageCharts();
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById("brandSalesChart").getContext("2d");
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: {{ brand_labels|safe }},
+        datasets: [{
+          label: "Revenue (Rs.)",
+          data: {{ brand_data|safe }},
+          backgroundColor: '#0B9444',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: true }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return 'Rs. ' + value.toLocaleString();
+              },
+              font: { size: 12 }
+            }
+          },
+          x: {
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 30,
+              minRotation: 25,
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock javascripts %}

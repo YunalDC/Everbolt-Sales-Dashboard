@@ -1,0 +1,41 @@
+{% block stylesheets %}
+  <style>
+    .custom-green-link {
+      color: #0B9444 !important;
+      text-decoration: none;
+    }
+
+    .custom-green-link:hover {
+      text-decoration: underline;
+    }
+
+    .footer-text {
+      display: inline-block;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+  </style>
+{% endblock stylesheets %}
+
+<footer class="footer">
+    <div class="container-fluid">
+        <ul class="nav">
+            <li class="nav-item">
+                <a target="_blank" href="https://play.google.com/store/apps/details?id=com.everboltit.everboltapp" class="nav-link">
+                    Download
+                </a>
+            </li>
+            <li class="nav-item">
+                <a target="_blank" href="https://www.everbolt.lk/about-us" class="nav-link">
+                    About Us
+                </a>
+            </li>
+        </ul>
+        <div class="copyright">
+            <span class="footer-text">
+                &copy; <a target="_blank" href="https://bit.ly/3fKQZaL" class="custom-green-link">Created by -</a> Everbolt IT Department
+            </span>
+        </div>
+    </div>
+</footer>

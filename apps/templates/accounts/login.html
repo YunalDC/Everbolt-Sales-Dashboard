@@ -1,0 +1,97 @@
+{% extends "layouts/base-fullscreen.html" %}
+
+{% block title %} Login {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<style>
+    .btn.btn-green {
+      background-color: #0B9444 !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #fff !important;
+      transition: background-color 0.2s ease-in-out;
+    }
+  
+    .btn.btn-green:hover {
+      background-color: #087A38 !important;
+    }
+  
+    .form-wrapper {
+      max-width: 380px;
+      margin: 0 auto;
+    }
+  
+    .form-group {
+      margin-bottom: 0.6rem !important;
+    }
+  
+    .card-header {
+      padding-bottom: 0rem !important;
+    }
+  
+    .card-category {
+      margin-bottom: 0.3rem !important;
+    }
+  
+    .card-body {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.5rem !important;
+    }
+    input.form-control:focus {
+    border-color: #0B9444 !important;
+    box-shadow: 0 0 0 0.1rem rgba(11, 148, 68, 0.25) !important;
+    outline: none;
+    }
+  </style>  
+{% endblock stylesheets %}
+
+{% block content %}
+{% load static %}
+    <div class="content">
+        <div class="container">
+            <div class="row pt-5">
+                <div class="col-md-6 mt-5 offset-md-3 pt-5 mt-5">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            <img src="{% static 'assets/img/everpulse.png' %}" alt="Everpulse Logo" class="mb-3" style="max-height: 60px;">
+                            
+                            <h4 class="title text-uppercase">
+                              SIGN IN
+                            </h4>
+                          
+                            <h6 class="card-category">
+                              {% if msg %}
+                                <span class="text-danger">{{ msg | safe }}</span>
+                              {% else %}
+                                <span>Enter your credentials</span>
+                              {% endif %}
+                            </h6>
+                          </div>
+                          <form role="form" method="post" action="">
+                            {% csrf_token %}
+                            <div class="card-body px-4 py-2 form-wrapper"> 
+                              <div class="form-group">
+                                <label>Username</label>
+                                {{ form.username }}
+                              </div>
+                              <div class="form-group">
+                                <label>Password</label>
+                                {{ form.password }}
+                              </div>
+                            </div>
+                            <div class="card-footer text-center">
+                              <button type="submit" name="login" class="btn btn-green">Login</button>
+                            </div>
+                        </form>  
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
