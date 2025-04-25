@@ -51,24 +51,20 @@ class Invoice(models.Model):
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey('Invoice', on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
-    quantity = models.PositiveIntegerField()
-    brand = models.CharField(max_length=100, blank=True)
-    part_number = models.CharField(max_length=100, blank=True)
+    product_name = models.CharField(max_length=255, default="Unknown Product")  # Store the product name directly
+    brand = models.CharField(max_length=100, blank=True, default=0)
+    part_number = models.CharField(max_length=100, blank=True, default=0)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    quantity = models.PositiveIntegerField()
     line_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
-        # Automatically populate brand and part number from product
-        if self.product:
-            self.brand = self.product.brand
-            self.part_number = self.product.part_number
-            self.unit_price = self.product.sales_price
-            self.line_total = self.quantity * self.unit_price
+        # Calculate the line_total based on the unit price and quantity
+        self.line_total = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.product.name if self.product else 'N/A'} - {self.invoice.invoice_number}"   
+        return f"{self.product_name} - {self.invoice.invoice_number}"
 
 class AgedReceivable(models.Model):
     customer_name = models.CharField(max_length=255)

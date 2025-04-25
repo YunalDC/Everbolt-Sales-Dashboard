@@ -10,12 +10,13 @@ from apps.home.models import Visit, Invoice, InvoiceItem
 from .forms import BulkInvoiceUploadForm, BulkExcelUploadForm
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from django.db import models
+from django.db import models,  IntegrityError 
 from django.db.models import Count, Sum, Q, F, FloatField, ExpressionWrapper
 from .models import Product, CustomerOrder, Invoice, AgedReceivable, InvoiceItem
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from decimal import Decimal 
 
 import fitz  # PyMuPDF
 import re
@@ -133,119 +134,130 @@ def extract_invoice_data(text):
         "po_number": extract(r'\b(\d{7,13})\b', "-")
     }
 
-# Invoice upload only
+# Invoice upload function
 @login_required(login_url="/login/")
 def upload_invoices(request):
     results = []
-
     if request.method == 'POST':
         excel_file = request.FILES.get('excel_file')
-        if not excel_file:
-            messages.error(request, "❌ No file uploaded.")
-            return render(request, 'home/upload_invoice.html', {'results': results})
+        if excel_file:
+            try:
+                wb = openpyxl.load_workbook(excel_file)
+                sheet = wb.active
+                print("DEBUG: Excel file loaded successfully.")  # Debugging statement
 
-        try:
-            wb = openpyxl.load_workbook(excel_file)
-            sheet = wb.active
+                # Extract headers and map them
+                headers = [cell.value.strip().lower() if cell.value else "" for cell in next(sheet.iter_rows(min_row=1, max_row=1))]
+                print("DEBUG: Headers extracted: ", headers)  # Debugging statement
+                header_map = {header: idx for idx, header in enumerate(headers)}
 
-            # Read headers
-            headers = [cell.value.strip().lower() if cell.value else "" for cell in next(sheet.iter_rows(min_row=1, max_row=1))]
-            header_map = {header: idx for idx, header in enumerate(headers)}
+                required = [
+                    'number', 'client', 'invoice/bill date', 'due date', 'salesperson',
+                    'total', 'product', 'quantity', 'brand', 'part number', 'unit price', 'subtotal'
+                ]
 
-            required = [
-                'number', 'client', 'invoice/bill date', 'due date', 'salesperson',
-                'total', 'untaxed amount', 'product', 'quantity', 'brand', 'part number'
-            ]
+                missing_cols = [col for col in required if col not in header_map]
+                if missing_cols:
+                    results.append(f"❌ Missing required columns: {', '.join(missing_cols)}")
+                    print(f"DEBUG: Missing columns: {missing_cols}")  # Debugging statement
+                else:
+                    previous_invoice = None
+                    for row in sheet.iter_rows(min_row=2, values_only=True):
+                        number = row[header_map['number']]
+                        if number:
+                            try:
+                                # Get general invoice info
+                                invoice_number = str(number)
+                                invoice_date = row[header_map['invoice/bill date']]
+                                due_date = row[header_map['due date']]
+                                salesperson = str(row[header_map['salesperson']])
+                                client = str(row[header_map['client']])
+                                total = float(str(row[header_map['total']]).replace(",", ""))
+                                subtotal = float(str(row[header_map['subtotal']]).replace(",", ""))
 
-            if not all(col in header_map for col in required):
-                results.append("❌ Missing required columns.")
-                return render(request, 'home/upload_invoice.html', {
-                    'results': results,
-                    'user_can_upload': request.user.is_superuser or request.user.groups.filter(name="Invoice Uploaders").exists()
-                })
+                                print(f"DEBUG: Creating invoice {invoice_number} for client {client}")  # Debugging statement
 
-            previous_invoice = None
+                                # Create Invoice record
+                                previous_invoice = Invoice.objects.create(
+                                    invoice_number=invoice_number,
+                                    client=client,
+                                    invoice_date=invoice_date,
+                                    due_date=due_date,
+                                    salesperson=salesperson,
+                                    total=total,
+                                    subtotal=subtotal
+                                )
+                                print(f"DEBUG: Invoice {invoice_number} created successfully.")  # Debugging statement
+                            except Exception as e:
+                                results.append(f"❌ Error creating invoice {invoice_number}: {e}")
+                                print(f"ERROR: {e}")  # Debugging statement
+                                previous_invoice = None
+                                continue
 
-            for row in sheet.iter_rows(min_row=2, values_only=True):
-                number = row[header_map['number']]
-                if number:
-                    try:
-                        invoice_number = str(number).strip()
-                        invoice_date = row[header_map['invoice/bill date']]
-                        due_date = row[header_map['due date']]
-                        salesperson = str(row[header_map['salesperson']]).strip()
-                        client = str(row[header_map['client']]).strip()
-                        total = float(str(row[header_map['total']]).replace(",", "") or 0)
-                        subtotal = float(str(row[header_map['untaxed amount']]).replace(",", "") or 0)
+                        if not previous_invoice:
+                            continue
 
-                        previous_invoice = Invoice.objects.create(
-                            invoice_number=invoice_number,
-                            client=client,
-                            invoice_date=invoice_date,
-                            due_date=due_date,
-                            salesperson=salesperson,
-                            total=total,
-                            subtotal=subtotal
-                        )
-                    except Exception as e:
-                        results.append(f"❌ Error creating invoice {number}: {e}")
-                        previous_invoice = None
-                        continue
+                        # Now create InvoiceItems for each product line under the invoice
+                        try:
+                            product_name = row[header_map['product']]
+                            quantity = row[header_map['quantity']]
+                            brand = row[header_map['brand']]
+                            part_number = row[header_map['part number']]
+                            unit_price = row[header_map['unit price']]  # Unit price directly from Excel
+                            line_total = row[header_map['subtotal']]  # You can calculate it if missing
 
-                if not previous_invoice:
-                    continue
+                            print(f"DEBUG: Creating item for product {product_name}, quantity {quantity}")  # Debugging statement
 
-                try:
-                    product_name = row[header_map['product']]
-                    quantity = row[header_map['quantity']]
-                    brand = row[header_map['brand']]
-                    part_number = row[header_map['part number']]
+                            # Skip creating item if product_name or quantity is missing
+                            if not product_name or quantity is None:
+                                raise ValueError("Missing product or quantity")
 
-                    if not product_name or quantity is None:
-                        raise ValueError("Missing product or quantity")
+                            # Create InvoiceItem using data from Excel
+                            InvoiceItem.objects.create(
+                                invoice=previous_invoice,  # Link this item to the invoice
+                                product_name=product_name,  # Store the product name directly
+                                brand=brand,
+                                part_number=part_number,
+                                unit_price=unit_price,
+                                quantity=quantity,
+                                line_total=unit_price * quantity  # Calculate the line total
+                            )
+                            print(f"DEBUG: Item for product {product_name} created successfully.")  # Debugging statement
+                        except Exception as e:
+                            results.append(f"❌ Error creating item for invoice {previous_invoice.invoice_number}: {e}")
+                            print(f"ERROR: {e}")  # Debugging statement
 
-                    # Look up product by part number
-                    product = Product.objects.filter(part_number=part_number).first()
-
-                    if not product:
-                        results.append(f"❌ Product not found for part number '{part_number}' in invoice {previous_invoice.invoice_number}")
-                        continue
-
-                    unit_price = float(product.sales_price or 0)
-                    quantity = float(quantity or 0)
-                    line_total = unit_price * quantity
-
-                    InvoiceItem.objects.create(
-                        invoice=previous_invoice,
-                        product=product,
-                        quantity=quantity,
-                        brand=brand,
-                        part_number=part_number,
-                        unit_price=unit_price,
-                        line_total=line_total
-                    )
-
-                except Exception as e:
-                    results.append(f"❌ Error creating item for invoice {previous_invoice.invoice_number}: {e}")
-
-            results.append("✅ Invoices and items uploaded successfully.")
-
-        except Exception as e:
-            results.append(f"❌ Failed to process Excel file: {e}")
+                    results.append("✅ Invoices and items uploaded successfully.")
+            except Exception as e:
+                results.append(f"❌ Failed to process Excel file: {e}")
+                print(f"ERROR: Failed to process Excel file: {e}")  # Debugging statement
 
     return render(request, 'home/upload_invoice.html', {
         'results': results,
         'user_can_upload': request.user.is_superuser or request.user.groups.filter(name="Invoice Uploaders").exists()
     })
 
+#Display Invoices
 @login_required(login_url="/login/")
 def display_invoices(request):
-    invoices = Invoice.objects.all().order_by('-invoice_date')[:100]
+    query = request.GET.get('q', '')  # Get the search query from the request
+    
+    # Filter invoices based on the search query (invoice number or client name)
+    invoices = Invoice.objects.filter(
+        invoice_number__icontains=query  # This can be adjusted depending on the search field
+    ).order_by('-invoice_date')  # Order invoices by the date (descending)
 
-    print("DEBUG INVOICES COUNT:", invoices.count())  # This should print 100 or fewer
+    # Paginate the invoices
+    paginator = Paginator(invoices, 10)  # 10 invoices per page
+    page_number = request.GET.get('page')  # Get the page number from the query string
+    page_obj = paginator.get_page(page_number)  # Get the page object
 
+    print("DEBUG INVOICES COUNT:", invoices.count())  # This should print the filtered count
+
+    # Render the response with the page object and search query
     return render(request, 'home/map.html', {
-        'invoices': invoices
+        'page_obj': page_obj,  # Send the paginated invoices to the template
+        'query': query  # Send the search query to retain it in the search field
     })
 
 #Product Display
