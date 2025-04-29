@@ -1,6 +1,6 @@
 from django import template
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
@@ -17,6 +17,10 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from decimal import Decimal 
+from django.conf import settings
+from django.db.models.functions import Lower
+from .models import UserProfile
+from django.db.models.functions import ExtractYear, ExtractMonth
 
 import fitz  # PyMuPDF
 import re
@@ -25,6 +29,7 @@ import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
 import json
+import calendar
 
 # Admin Panel
 @login_required
@@ -413,13 +418,37 @@ def upload_collection(request):
 
     return render(request, 'home/upload_collection.html', {'results': results})
 
-# Display Brand Sales
+# Display Brand Sales and Monthly Sales
 @login_required(login_url="/login/")
 def index(request):
     user = request.user
     full_name = f"{user.first_name} {user.last_name}".strip().lower()
+
     invoices = Invoice.objects.filter(salesperson__iexact=full_name)
 
+    # Monthly sales aggregation
+    monthly_sales = (
+        invoices
+        .annotate(year=ExtractYear('invoice_date'), month=ExtractMonth('invoice_date'))
+        .values('year', 'month')
+        .annotate(total=Sum('total'))
+        .order_by('year', 'month')
+    )
+
+    sales_per_year = {
+        2025: [0] * 12,
+        2024: [0] * 12,
+        2023: [0] * 12,
+    }
+
+    for sale in monthly_sales:
+        year = sale['year']
+        month = sale['month']
+        total = sale['total']
+        if year in sales_per_year:
+            sales_per_year[year][month - 1] = float(total)
+
+    # KPI data
     total_invoices = invoices.count()
     total_amount = invoices.aggregate(Sum('total'))['total__sum'] or 0
 
@@ -437,35 +466,22 @@ def index(request):
 
     invoice_numbers = invoices.values_list('invoice_number', flat=True)
 
-    # Estimate per-unit value contribution from subtotal
+    # Accurate brand revenue using unit_price * quantity
     items = (
         InvoiceItem.objects
-        .filter(invoice__invoice_number__in=invoice_numbers, brand__in=tracked_brands)
+        .filter(invoice__invoice_number__in=invoice_numbers)
+        .annotate(lower_brand=Lower('brand'))
+        .filter(lower_brand__in=[b.lower() for b in tracked_brands])
         .annotate(
-            invoice_total=F('invoice__total'),
-            invoice_subtotal=F('invoice__subtotal'),
-            contribution_ratio=ExpressionWrapper(
-                F('invoice__subtotal') / F('invoice__total'),
-                output_field=FloatField()
-            ),
-            estimated_item_price=ExpressionWrapper(
-                (F('invoice__subtotal') / F('invoice__total')) * F('invoice__total') / Count('invoice__invoice_number'),
-                output_field=FloatField()
-            ),
-            brand_revenue=ExpressionWrapper(
-                F('invoice__subtotal') * F('quantity'),
-                output_field=FloatField()
-            )
+            brand_revenue=ExpressionWrapper(F('unit_price') * F('quantity'), output_field=FloatField())
         )
-        .values('brand')
+        .values('lower_brand')
         .annotate(total_sales=Sum('brand_revenue'))
-        .order_by('-total_sales')
     )
 
-    # Ensure safe conversion to float
-    brand_data_map = {entry['brand'].upper(): float(entry['total_sales']) for entry in items}
+    brand_data_map = {entry['lower_brand']: float(entry['total_sales']) for entry in items}
     brand_labels = tracked_brands
-    brand_data = [brand_data_map.get(brand.upper(), 0.0) for brand in tracked_brands]
+    brand_data = [brand_data_map.get(brand.lower(), 0.0) for brand in tracked_brands]
 
     return render(request, "home/index.html", {
         'total_invoices': total_invoices,
@@ -473,5 +489,91 @@ def index(request):
         'top_clients': top_clients,
         'brand_labels': json.dumps(brand_labels),
         'brand_data': json.dumps(brand_data),
+        'sales_per_year': json.dumps(sales_per_year),
         'is_salesperson': True,
     })
+
+
+@login_required(login_url="/login/")
+def admin_panel(request):
+    user = request.user
+
+    # Allow only superusers or selected users to see sales table
+    show_brand_sales = user.is_superuser or user.groups.filter(name='SalesManagers').exists()
+
+    brand_sales_data = []
+
+    if show_brand_sales:
+        tracked_brands = [
+            'Schneider', 'Mennekes', 'Genebre', 'Baumer', 'Selec', 'Pilz', 'Hanyoung Nux', 'Emas',
+            'SKP', 'HPC', 'Trumen', 'ONKA', 'Foxtam', 'Hensel', 'DKM', 'Perry'
+        ]
+
+        all_users = User.objects.all()
+
+        for salesperson in all_users:
+            full_name = f"{salesperson.first_name} {salesperson.last_name}".strip().lower()
+            invoices = Invoice.objects.filter(salesperson__iexact=full_name)
+
+            invoice_numbers = invoices.values_list('invoice_number', flat=True)
+
+            items = (
+                InvoiceItem.objects
+                .filter(invoice__invoice_number__in=invoice_numbers)
+                .annotate(lower_brand=Lower('brand'))
+                .filter(lower_brand__in=[b.lower() for b in tracked_brands])
+                .annotate(
+                    brand_revenue=ExpressionWrapper(
+                        F('unit_price') * F('quantity'),
+                        output_field=FloatField()
+                    )
+                )
+                .values('lower_brand')
+                .annotate(total_sales=Sum('brand_revenue'))
+            )
+
+            brand_map = {entry['lower_brand']: float(entry['total_sales']) for entry in items}
+            brand_sales = {brand: brand_map.get(brand.lower(), 0.0) for brand in tracked_brands}
+
+            brand_sales_data.append({
+                'salesperson': salesperson.get_full_name(),
+                'brand_sales': brand_sales,
+            })
+
+    return render(request, "home/admin_panel.html", {
+        'show_brand_sales': show_brand_sales,
+        'brand_sales_data': brand_sales_data,
+    })
+
+# Helper: only allow admin users
+def admin_required(login_url=None):
+    return user_passes_test(lambda u: u.is_superuser, login_url=login_url)
+
+@login_required
+@admin_required(login_url='/login/')
+def edit_users(request):
+    users = User.objects.filter(is_superuser=False)
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        user = User.objects.get(id=user_id)
+
+        if 'save' in request.POST:
+            user.username = request.POST.get('username')
+            user.email = request.POST.get('email')
+            user.first_name = request.POST.get('first_name')
+            user.last_name = request.POST.get('last_name')
+            user.save()
+
+        elif 'upload' in request.POST:
+            profile_image = request.FILES.get('profile_image')
+
+            if profile_image:
+                profile, created = UserProfile.objects.get_or_create(user=user)
+                profile.profile_image = profile_image
+                profile.save()
+
+        return redirect('edit_users')
+
+    return render(request, 'admin/edit_users.html', {'users': users})
+

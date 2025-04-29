@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 from apps.home import views
 from apps.home.views import mark_visit
 from django.conf import settings
@@ -19,6 +19,7 @@ urlpatterns = [
     path('upload-product/', views.upload_products, name='upload_product'),
     path("products.html/", views.display_products, name="display_products"),
     path('collections/', views.view_collections, name='view_collections'),
+    path('edit_users/', views.edit_users, name='edit_users'), 
 
     # Matches any html file
     re_path(r'^.*\.*', views.pages, name='pages'),

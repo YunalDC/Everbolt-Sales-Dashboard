@@ -1,0 +1,158 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Edit Users {% endblock %}
+
+{% block stylesheets %}
+<style>
+  .dashboard-container {
+    max-width: 1300px;
+    margin-left: 260px; /* Push right after sidebar */
+    margin-right: auto;
+    padding: 2rem;
+  }
+
+  .dashboard-title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    color: #333;
+    margin-top: -20px; /* Aligns better with sidebar top */
+  }
+
+  .user-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .user-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 0;
+  }
+
+  .form-group {
+    flex: 1 1 20%;
+    min-width: 150px;
+  }
+
+  .form-group label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    display: block;
+  }
+
+  .form-control {
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .btn-section {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .btn-profile-upload {
+    background-color: #555;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-profile-upload:hover {
+    background-color: #444;
+  }
+
+  .btn-green {
+    background-color: #0B9444;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.1rem;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+
+  .btn-green:hover {
+    background-color: #087A38;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-container {
+      margin-left: 0;
+      padding: 1.2rem;
+    }
+
+    .form-group {
+      flex: 1 1 100%;
+    }
+
+    .btn-section {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <h2 class="dashboard-title">🛠 Edit User Profiles</h2>
+
+  {% for user in users %}
+  <div class="user-card">
+    <form method="POST" enctype="multipart/form-data" class="user-form">
+      {% csrf_token %}
+      <input type="hidden" name="user_id" value="{{ user.id }}">
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" class="form-control" name="username" value="{{ user.username }}">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="form-control" name="email" value="{{ user.email }}">
+      </div>
+
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}">
+      </div>
+
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}">
+      </div>
+
+      <!-- Profile Image Upload -->
+      <div class="form-group" style="flex: 1 1 100%;">
+        <label>Profile Image</label>
+        <input type="file" class="form-control" name="profile_image">
+      </div>
+
+      <div class="btn-section">
+        <button type="submit" name="upload" class="btn-profile-upload">📤 Upload Profile Image</button>
+        <button type="submit" name="save" class="btn btn-green">💾 Save</button>
+      </div>
+    </form>
+  </div>
+  {% empty %}
+    <p>No users to edit.</p>
+  {% endfor %}
+</div>
+{% endblock %}

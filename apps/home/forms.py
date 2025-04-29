@@ -1,5 +1,5 @@
 from django import forms
-from .models import Visit
+from .models import Visit, UserProfile
 
 class VisitForm(forms.ModelForm):
     class Meta:
@@ -18,3 +18,9 @@ class BulkInvoiceUploadForm(forms.Form):
 
 class BulkExcelUploadForm(forms.Form):
     excel_file = forms.FileField(required=True)
+
+class ProfileImageForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image']
+

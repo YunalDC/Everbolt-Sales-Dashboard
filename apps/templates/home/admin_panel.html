@@ -5,15 +5,13 @@
 
 {% block stylesheets %}
 <style>
-  /* Container */
   .dashboard-container {
     max-width: 1300px;
     margin: 0 auto;
-    padding: 5rem 2rem 2rem; 
+    padding: 3rem 2rem 1rem;
     margin-left: 240px;
   }
 
-  /* Title */
   .dashboard-title {
     text-align: center;
     font-size: 2rem;
@@ -22,12 +20,10 @@
     color: #333;
   }
 
-  /* Cards Grid (2x2 layout) */
   .admin-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
-    margin-top: 2rem;
   }
 
   .admin-card {
@@ -48,6 +44,7 @@
   .card-orange    { background: #f98e4b; }
   .card-pink      { background: #ff5e9c; }
   .card-red       { background: #ff0000; }
+  .card-blue      { background: #007bff; }
 
   .admin-card-title {
     font-size: 1.1rem;
@@ -68,49 +65,44 @@
     text-decoration: underline;
   }
 
-  /* Buttons */
-  .btn-custom {
-    display: inline-block;
-    padding: 0.5rem 1.1rem;
-    border-radius: 6px;
+  .brand-sales-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .brand-sales-table thead {
     background-color: #087A38;
     color: #fff;
+    text-transform: uppercase;
     font-weight: 600;
-    border: none;
-    transition: 0.2s ease;
   }
 
-  .btn-custom:hover {
-    background-color: #05642c;
+  .brand-sales-table th,
+  .brand-sales-table td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
   }
 
-  /* Form Styling */
-  .form-group label {
+  .brand-sales-table tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .brand-sales-table tbody td:first-child {
     font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: block;
+    text-align: left;
   }
 
-  .form-control {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    transition: border-color 0.2s ease;
-  }
-
-  .form-control:focus {
-    border-color: #0B9444;
-    outline: none;
-    box-shadow: 0 0 0 0.15rem rgba(11, 148, 68, 0.25);
-  }
-
-  /* Responsive Fixes */
   @media (max-width: 768px) {
     .dashboard-container {
       padding: 1.5rem 1rem;
     }
-
     .dashboard-title {
       font-size: 1.5rem;
     }
@@ -121,7 +113,6 @@
 {% block content %}
 <div class="dashboard-container">
   <h2 class="dashboard-title">🛠 Admin Dashboard</h2>
-
   <div class="admin-grid">
     <div class="admin-card card-purple">
       <div class="admin-card-title">📤 Upload Invoices</div>
@@ -139,11 +130,27 @@
       </div>
     </div>
 
+    <div class="admin-card card-red">
+      <div class="admin-card-title">📤 Upload Collection</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_collection' %}">Go to Collection</a>
+        <i class="fas fa-upload"></i>
+      </div>
+    </div>
+
     <div class="admin-card card-orange">
       <div class="admin-card-title">🔔 Post Notification</div>
       <div class="admin-card-footer">
         <a href="#">Post</a>
         <i class="fas fa-bell"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-blue">
+      <div class="admin-card-title">🛠 Edit User Profiles</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'edit_users' %}">Edit</a>
+        <i class="fas fa-user-edit"></i>
       </div>
     </div>
 
@@ -154,15 +161,36 @@
         <i class="fas fa-tasks"></i>
       </div>
     </div>
-
-    <div class="admin-card card-red">
-      <div class="admin-card-title">📤 Upload Collection</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_collection' %}">Go to Collection</a>
-        <i class="fas fa-upload"></i>
-      </div>
-    </div>
-
   </div>
 </div>
+
+{% if show_brand_sales %}
+<div class="dashboard-container" style="margin-top: 3rem;">
+  <h2 class="dashboard-title">📊 Brand Sales Report (Salespersons)</h2>
+  <div style="overflow-x: auto;">
+    <table class="brand-sales-table">
+      <thead>
+        <tr>
+          <th>Salesperson</th>
+          {% for brand in brand_sales_data.0.brand_sales.keys %}
+            <th>{{ brand }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in brand_sales_data %}
+          {% if record.salesperson %}
+          <tr>
+            <td>{{ record.salesperson }}</td>
+            {% for sales in record.brand_sales.values %}
+              <td>LKR {{ sales|floatformat:2 }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

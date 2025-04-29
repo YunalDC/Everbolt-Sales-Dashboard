@@ -71,44 +71,39 @@
 {% block content %}
 <div class="content">
   <!-- Performance Chart -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card card-chart">
-        <div class="card-header">
-          <div class="row">
-            <div class="col-sm-6 text-left">
-              <h5 class="card-category">Total Shipments</h5>
-              <h2 class="card-title">Performance</h2>
-            </div>
-            <div class="col-sm-6">
-              <div class="btn-group btn-group-toggle float-right" data-toggle="buttons">
-                <label class="btn btn-sm btn-primary btn-simple active" id="0">
-                  <input type="radio" name="options" checked>
-                  <span class="d-none d-sm-block">Accounts</span>
-                  <span class="d-block d-sm-none"><i class="tim-icons icon-single-02"></i></span>
-                </label>
-                <label class="btn btn-sm btn-primary btn-simple" id="1">
-                  <input type="radio" name="options">
-                  <span class="d-none d-sm-block">Purchases</span>
-                  <span class="d-block d-sm-none"><i class="tim-icons icon-gift-2"></i></span>
-                </label>
-                <label class="btn btn-sm btn-primary btn-simple" id="2">
-                  <input type="radio" name="options">
-                  <span class="d-none d-sm-block">Sessions</span>
-                  <span class="d-block d-sm-none"><i class="tim-icons icon-tap-02"></i></span>
-                </label>
-              </div>
+  <!-- Performance Chart -->
+<div class="row">
+  <div class="col-12">
+    <div class="card card-chart">
+      <div class="card-header">
+        <div class="row">
+          <div class="col-sm-6 text-left">
+            <h5 class="card-category">Sales Overview</h5>
+            <h2 class="card-title">Monthly Sales</h2>
+          </div>
+          <div class="col-sm-6">
+            <div class="btn-group btn-group-toggle float-right" data-toggle="buttons" id="year-selector">
+              <label class="btn btn-sm btn-primary btn-simple active" id="btn-2025">
+                <input type="radio" name="year-options" autocomplete="off" checked> 2025
+              </label>
+              <label class="btn btn-sm btn-primary btn-simple" id="btn-2024">
+                <input type="radio" name="year-options" autocomplete="off"> 2024
+              </label>
+              <label class="btn btn-sm btn-primary btn-simple" id="btn-2023">
+                <input type="radio" name="year-options" autocomplete="off"> 2023
+              </label>
             </div>
           </div>
         </div>
-        <div class="card-body">
-          <div class="chart-area">
-            <canvas id="chartBig1"></canvas>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-area">
+          <canvas id="performanceChart" height="160"></canvas>
         </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Brand Revenue Chart -->
   <div class="row">
@@ -245,6 +240,84 @@
 
 {% block javascripts %}
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+  const ctxPerformance = document.getElementById("performanceChart").getContext("2d");
+
+  const monthlyLabels = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  // Data passed from Django safely
+  const salesData = {{ sales_per_year|safe }};
+
+  const performanceChart = new Chart(ctxPerformance, {
+    type: 'line',
+    data: {
+      labels: monthlyLabels,
+      datasets: [{
+        label: "Sales (Rs.)",
+        backgroundColor: 'rgba(11, 148, 68, 0.2)',
+        borderColor: '#0B9444',
+        borderWidth: 2,
+        pointBackgroundColor: '#0B9444',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#0B9444',
+        data: salesData["2025"] // Start with 2025
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return 'Rs. ' + value.toLocaleString();
+            },
+            font: { size: 12 }
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 10 }
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('btn-2025').addEventListener('click', function() {
+    updateChart(2025);
+    setActiveButton('btn-2025');
+  });
+  document.getElementById('btn-2024').addEventListener('click', function() {
+    updateChart(2024);
+    setActiveButton('btn-2024');
+  });
+  document.getElementById('btn-2023').addEventListener('click', function() {
+    updateChart(2023);
+    setActiveButton('btn-2023');
+  });
+
+  function updateChart(year) {
+    performanceChart.data.datasets[0].data = salesData[year];
+    performanceChart.update();
+  }
+
+  function setActiveButton(id) {
+    const buttons = document.querySelectorAll("#year-selector label");
+    buttons.forEach(btn => btn.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+});
+
   $(document).ready(function () {
     demo.initDashboardPageCharts();
   });

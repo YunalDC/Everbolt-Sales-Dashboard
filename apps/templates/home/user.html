@@ -129,7 +129,7 @@
                 <div class="block block-three"></div>
                 <div class="block block-four"></div>
                 <a href="javascript:void(0)">
-                  <img class="avatar" src="{{ ASSETS_ROOT }}/img/default-avatar.png" alt="...">
+                  <img class="avatar" src="{{ user.userprofile.profile_image.url }}" alt="..." onerror="this.onerror=null;this.src='{{ ASSETS_ROOT }}/img/default-avatar.png';">\
                   <h5 class="title">{{ request.user.username }}</h5>
                   <p class="description">{{ request.user.email }}</p>
                 </a>

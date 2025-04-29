@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),          # Django admin route
+    path('admin/home/', include('apps.home.urls')), 
     path("", include("apps.authentication.urls")), # Auth routes - login / register
 
     # ADD NEW Routes HERE
