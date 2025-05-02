@@ -1,0 +1,111 @@
+{% extends "layouts/base.html" %}
+{% block title %}Assign Task{% endblock %}
+
+{% block content %}
+<style>
+  .task-container {
+    padding-top: 3rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .task-card {
+    width: 100%;
+    max-width: 640px;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .task-card h2 {
+    font-weight: 700;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .form-control, select {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+
+  .btn-assign {
+    background: #0B9444;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+  .btn-assign:hover {
+    background: #087a38;
+  }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.2rem;
+    font-size: 0.95rem;
+  }
+
+  .alert-success {
+    background: #e6f7ec;
+    color: #257942;
+    border: 1px solid #bde5cb;
+  }
+
+  .alert-error {
+    background: #fef0f0;
+    color: #a94442;
+    border: 1px solid #f1c2c2;
+  }
+</style>
+
+<div class="task-container ml-0">
+  <div class="task-card">
+    <h2>📝 Assign Task</h2>
+
+    {% if success %}
+      <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <label class="form-label" for="assigned_to">Assigned to:</label>
+      <select name="assigned_to" required>
+        <option value="">---------</option>
+        {% for user in users %}
+          <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+        {% endfor %}
+      </select>
+
+      <label class="form-label" for="title">Title:</label>
+      <input type="text" name="title" class="form-control" required>
+
+      <label class="form-label" for="description">Description:</label>
+      <textarea name="description" class="form-control" rows="3" required></textarea>
+
+      <button type="submit" class="btn-assign">Assign Task</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,109 +1,139 @@
 {% extends "layouts/base.html" %}
+{% load static %}
 
-{% block title %} Edit Users {% endblock %}
+{% block title %}Edit Users{% endblock %}
 
 {% block stylesheets %}
 <style>
-  .dashboard-container {
-    max-width: 1300px;
-    margin-left: 260px; /* Push right after sidebar */
-    margin-right: auto;
-    padding: 2rem;
-  }
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 2rem 2rem;
+  margin-left: 260px; /* aligns with sidebar width */
+  margin-top: 3rem;
+}
 
   .dashboard-title {
     text-align: center;
     font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     color: #333;
-    margin-top: -20px; /* Aligns better with sidebar top */
   }
 
   .user-card {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
     background: #fff;
-    border: 1px solid #eee;
+    border: 1px solid #ddd;
     border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-    padding: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+    padding: 2rem;
     margin-bottom: 2rem;
   }
 
-  .user-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-end;
-    margin-bottom: 0;
+  .form-left, .form-right {
+    flex: 1 1 45%;
+    min-width: 300px;
   }
 
   .form-group {
-    flex: 1 1 20%;
-    min-width: 150px;
+    margin-bottom: 1.2rem;
   }
 
   .form-group label {
     font-weight: 600;
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
     display: block;
+    margin-bottom: 0.4rem;
   }
 
   .form-control {
     width: 100%;
-    font-size: 0.9rem;
-    padding: 0.45rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 6px;
     border: 1px solid #ccc;
+    font-size: 0.95rem;
   }
 
-  .btn-section {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-  }
-
-  .btn-profile-upload {
-    background-color: #555;
-    color: white;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    border-radius: 6px;
+  .btn {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 600;
     border: none;
+    border-radius: 6px;
     cursor: pointer;
-  }
-
-  .btn-profile-upload:hover {
-    background-color: #444;
+    transition: background 0.3s ease, transform 0.2s ease;
   }
 
   .btn-green {
     background-color: #0B9444;
-    color: #fff;
-    border: none;
-    padding: 0.5rem 1.1rem;
-    font-weight: 600;
-    border-radius: 6px;
+    color: white;
   }
 
   .btn-green:hover {
     background-color: #087A38;
+    transform: scale(1.03);
+  }
+
+  .profile-preview {
+    max-width: 160px;
+    max-height: 160px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+  }
+
+  .file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .file-upload-btn {
+    background-color: #0B9444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .file-upload-btn:hover {
+    background-color: #087A38;
+    transform: scale(1.03);
+  }
+
+  .file-upload-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 100px;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .file-name {
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    color: #666;
   }
 
   @media (max-width: 768px) {
     .dashboard-container {
       margin-left: 0;
-      padding: 1.2rem;
     }
 
-    .form-group {
-      flex: 1 1 100%;
-    }
-
-    .btn-section {
+    .user-card {
       flex-direction: column;
-      align-items: stretch;
     }
   }
 </style>
@@ -115,44 +145,85 @@
 
   {% for user in users %}
   <div class="user-card">
-    <form method="POST" enctype="multipart/form-data" class="user-form">
+
+    <!-- Left: User Info -->
+    <form method="POST" class="form-left" action="{% url 'edit_users' %}">
       {% csrf_token %}
       <input type="hidden" name="user_id" value="{{ user.id }}">
 
       <div class="form-group">
         <label>Username</label>
-        <input type="text" class="form-control" name="username" value="{{ user.username }}">
+        <input type="text" name="username" class="form-control" value="{{ user.username }}">
       </div>
 
       <div class="form-group">
         <label>Email</label>
-        <input type="email" class="form-control" name="email" value="{{ user.email }}">
+        <input type="email" name="email" class="form-control" value="{{ user.email }}">
       </div>
 
       <div class="form-group">
         <label>First Name</label>
-        <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}">
+        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
       </div>
 
       <div class="form-group">
         <label>Last Name</label>
-        <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}">
+        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
       </div>
 
-      <!-- Profile Image Upload -->
-      <div class="form-group" style="flex: 1 1 100%;">
-        <label>Profile Image</label>
-        <input type="file" class="form-control" name="profile_image">
+      <button type="submit" name="save" class="btn btn-green">💾 Save</button>
+    </form>
+
+    <!-- Right: Profile Image -->
+    <form method="POST" enctype="multipart/form-data" class="form-right" action="{% url 'edit_users' %}">
+      {% csrf_token %}
+      <input type="hidden" name="user_id" value="{{ user.id }}">
+
+      <div class="form-group text-center">
+        <label>Current Profile Image</label><br>
+        {% if user.userprofile.profile_image and user.userprofile.profile_image.url and user.userprofile.profile_image.name != "profile_images/default-avatar.png" %}
+        <img src="{{ user.userprofile.profile_image.url }}" class="profile-preview" alt="Profile Image" id="preview_{{ user.id }}">
+        {% else %}
+        <img src="{{ MEDIA_URL }}profile_images/default-avatar.png" class="profile-preview" alt="Default Avatar" id="preview_{{ user.id }}">
+        {% endif %}
       </div>
 
-      <div class="btn-section">
-        <button type="submit" name="upload" class="btn-profile-upload">📤 Upload Profile Image</button>
-        <button type="submit" name="save" class="btn btn-green">💾 Save</button>
+      <div class="form-group text-center">
+        <label>Select New Image</label><br>
+        <div class="file-upload-wrapper">
+          <label class="file-upload-btn" for="profile_image_{{ user.id }}">📂 Choose Image</label>
+          <input id="profile_image_{{ user.id }}" type="file" name="profile_image" class="file-upload-input" accept="image/*" onchange="showFileName(this, 'file_name_{{ user.id }}'); previewImage(this, 'preview_{{ user.id }}');">
+        </div>
+        <div class="file-name" id="file_name_{{ user.id }}">No file chosen</div>
+      </div>
+
+      <div class="form-group text-center">
+        <button type="submit" name="upload" class="btn btn-green">📤 Upload</button>
       </div>
     </form>
+
   </div>
   {% empty %}
     <p>No users to edit.</p>
   {% endfor %}
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+  function showFileName(input, targetId) {
+    const fileName = input.files[0] ? input.files[0].name : 'No file chosen';
+    document.getElementById(targetId).textContent = fileName;
+  }
+
+  function previewImage(input, previewId) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById(previewId).src = e.target.result;
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
 {% endblock %}

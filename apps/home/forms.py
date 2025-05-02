@@ -1,5 +1,5 @@
 from django import forms
-from .models import Visit, UserProfile
+from .models import Visit, UserProfile, Task
 
 class VisitForm(forms.ModelForm):
     class Meta:
@@ -24,3 +24,8 @@ class ProfileImageForm(forms.ModelForm):
         model = UserProfile
         fields = ['profile_image']
 
+# Assign Task
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['assigned_to', 'title', 'description']

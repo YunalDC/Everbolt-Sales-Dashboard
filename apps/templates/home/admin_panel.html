@@ -45,6 +45,8 @@
   .card-pink      { background: #ff5e9c; }
   .card-red       { background: #ff0000; }
   .card-blue      { background: #007bff; }
+  .card-yellow      { background: #efcc00; }
+  .card-black      { background: #000; }
 
   .admin-card-title {
     font-size: 1.1rem;
@@ -157,8 +159,24 @@
     <div class="admin-card card-pink">
       <div class="admin-card-title">📝 Assign Tasks</div>
       <div class="admin-card-footer">
-        <a href="#">Assign</a>
+        <a href="{% url 'assign_tasks' %}">Assign</a>
         <i class="fas fa-tasks"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-yellow">
+      <div class="admin-card-title">⚙️ Upload Customers</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_customers' %}">Go to Customers</a>
+        <i class="fas fa-cogs"></i>
+      </div>
+    </div>
+
+    <div class="admin-card card-black">
+      <div class="admin-card-title">⚙️ Upload Brands</div>
+      <div class="admin-card-footer">
+        <a href="{% url 'upload_customers' %}">Go to Brands</a>
+        <i class="fas fa-cogs"></i>
       </div>
     </div>
   </div>

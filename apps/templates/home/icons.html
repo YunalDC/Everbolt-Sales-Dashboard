@@ -19,13 +19,31 @@
     color: #fff !important;
     border: none !important;
     box-shadow: none !important;
-    background-image: none !important;
-    box-shadow: none !important;
   }
 
   .submit-btn {
     width: 200px;
     max-width: 100%;
+  }
+
+  .autocomplete-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 10;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .autocomplete-dropdown div {
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .autocomplete-dropdown div:hover {
+    background: #f2f2f2;
   }
 
   .visit-form-card {
@@ -63,6 +81,7 @@
 
   .form-group {
     margin-bottom: 0.40rem;
+    position: relative;
   }
 
   @media (max-width: 768px) {
@@ -108,10 +127,15 @@
           <select name="sales_officer" class="form-control">
             <option value="">Select Sales Officer</option>
             <option value="ramith_thiwanka">Ramith Thiwanka</option>
+            <option value="sasindu_chamika">Sasindu Chamika</option>
+            <option value="pasindu_janith">Pasindu Janith</option>
+            <option value="udara_lakshitha">Udara Lakshitha</option>
+            <option value="shanka_sachith">Shanka Sachith</option>
           </select>
         </div>
         <div class="form-group">
-          <input type="text" name="company" class="form-control" placeholder="Search or Type Company">
+          <input type="text" id="company-input" name="company" class="form-control" placeholder="Search or Type Company">
+          <div id="company-suggestions" class="autocomplete-dropdown"></div>
         </div>
       </div>
 
@@ -119,7 +143,12 @@
         <div class="form-group">
           <select name="visit_type" class="form-control">
             <option value="">Select Visit Type</option>
-            <option value="ramith_thiwanka">Technical Visit</option>
+            <option value="delivery">Delivery</option>
+            <option value="sales_visit">Sales Visit</option>
+            <option value="technical_visit">Technical Visit</option>
+            <option value="payment_collection">Payment Collection</option>
+            <option value="scheduled_visit">Scheduled Visit</option>
+            <option value="customer_visit">Customer Requested Visit</option>
           </select>
         </div>
         <div class="form-group">
@@ -148,5 +177,43 @@
       alert.classList.add("hide");
     }
   }, 3000);
+
+  const companyInput = document.getElementById("company-input");
+  const suggestionBox = document.getElementById("company-suggestions");
+
+  companyInput.addEventListener("input", function () {
+    const query = this.value;
+
+    if (query.length < 2) {
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    fetch(`/autocomplete-company/?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(data => {
+        suggestionBox.innerHTML = "";
+        if (data.length === 0) {
+          suggestionBox.style.display = "none";
+          return;
+        }
+        data.forEach(company => {
+          const div = document.createElement("div");
+          div.textContent = company;
+          div.onclick = () => {
+            companyInput.value = company;
+            suggestionBox.style.display = "none";
+          };
+          suggestionBox.appendChild(div);
+        });
+        suggestionBox.style.display = "block";
+      });
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!suggestionBox.contains(e.target) && e.target !== companyInput) {
+      suggestionBox.style.display = "none";
+    }
+  });
 </script>
 {% endblock javascripts %}

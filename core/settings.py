@@ -36,6 +36,7 @@ ALLOWED_HOSTS = [
     '192.168.1.32',
     '192.168.1.16',
     '10.199.249.190',
+    '10.119.196.190',
     'localhost:85',
 ]
 
@@ -145,11 +146,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-#############################################################
-# SRC: https://devcenter.heroku.com/articles/django-assets
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.9/howto/static-files/
 STATIC_ROOT = os.path.join(CORE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
@@ -162,5 +158,3 @@ STATICFILES_DIRS = (
 )
 
 
-#############################################################
-#############################################################

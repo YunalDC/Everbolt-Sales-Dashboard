@@ -1,5 +1,5 @@
 from django import template
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.text import slugify
 from apps.home.models import Visit, Invoice, InvoiceItem
-from .forms import BulkInvoiceUploadForm, BulkExcelUploadForm
+from .forms import BulkInvoiceUploadForm, BulkExcelUploadForm, TaskForm
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.db import models,  IntegrityError 
@@ -19,10 +19,13 @@ from django.core.paginator import Paginator
 from decimal import Decimal 
 from django.conf import settings
 from django.db.models.functions import Lower
-from .models import UserProfile
+from .models import UserProfile, Task, Customer
 from django.db.models.functions import ExtractYear, ExtractMonth
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
-import fitz  # PyMuPDF
+import requests
+import fitz  
 import re
 from datetime import datetime
 import pandas as pd
@@ -101,6 +104,51 @@ def mark_visit(request):
             print("Error while saving visit:", e)
             success = False
     return render(request, 'home/icons.html', {'success': success})
+
+# Extract Data about Customers
+@login_required
+def upload_customers(request):
+    if request.method == 'POST':
+        excel_file = request.FILES.get('excel_file')
+        if not excel_file:
+            messages.error(request, "❌ Please upload a valid Excel file.")
+            return render(request, 'home/upload_customers.html')
+
+        try:
+            wb = openpyxl.load_workbook(excel_file)
+            sheet = wb.active
+            headers = [cell.value for cell in sheet[1]]
+            header_map = {header.strip().lower(): idx for idx, header in enumerate(headers)}
+
+            required_columns = ['display name', 'city', 'country', 'email', 'phone', 'salesperson']
+            if not all(col in header_map for col in required_columns):
+                messages.error(request, "❌ Missing required columns.")
+                return render(request, 'home/upload_customers.html')
+
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                Customer.objects.create(
+                    display_name=row[header_map['display name']],
+                    city=row[header_map['city']],
+                    country=row[header_map['country']],
+                    email=row[header_map['email']],
+                    phone=str(row[header_map['phone']]),
+                    salesperson=row[header_map['salesperson']],
+                )
+
+            messages.success(request, "✅ Customers uploaded successfully!")
+
+        except Exception as e:
+            messages.error(request, f"❌ Error reading Excel file: {e}")
+
+    return render(request, 'home/upload_customers.html')
+
+# Visit Company Display
+
+@login_required
+def autocomplete_company(request):
+    query = request.GET.get('q', '')
+    companies = Customer.objects.filter(display_name__icontains=query).values_list('display_name', flat=True).distinct()[:10]
+    return JsonResponse(list(companies), safe=False)
 
 # Extract invoice data from PDF text (optional utility)
 def extract_invoice_data(text):
@@ -333,6 +381,57 @@ def upload_products(request):
 
     return render(request, 'home/upload_product.html', {'results': results})
 
+# Mark Visit 
+@csrf_exempt
+@login_required(login_url="/login/")
+def mark_visit(request):
+    success = None
+    if request.method == 'POST':
+        try:
+            # Get form data
+            visit_date = request.POST.get('visit_date')
+            sales_officer = request.POST.get('sales_officer')
+            company = request.POST.get('company')
+            visit_type = request.POST.get('visit_type')
+            visit_details = request.POST.get('visit_details')
+            remarks = request.POST.get('remarks')
+
+            # Save to Django DB
+            Visit.objects.create(
+                visit_date=visit_date,
+                sales_officer=sales_officer,
+                company=company,
+                visit_type=visit_type,
+                visit_details=visit_details,
+                remarks=remarks,
+                submitted_at=now()
+            )
+
+            # Prepare data for Google Script
+            payload = {
+                'visit_date': visit_date,
+                'sales_officer': sales_officer,
+                'company': company,
+                'visit_type': visit_type,
+                'visit_details': visit_details,
+                'remarks': remarks
+            }
+
+            # Send to Google Apps Script
+            script_url = 'https://script.google.com/macros/s/AKfycbziaKZFcxY2Y7rqEBNBCgCc_EXDWN6ZZtJXk8lz7e5D8cgmUqz0qxl90BG411lf5fOE/exec'
+            response = requests.post(script_url, data=payload, timeout=5)
+
+            # Optional logging
+            print(f"[INFO] Google Sheet response: {response.status_code} - {response.text}")
+
+            success = response.status_code == 200
+
+        except Exception as e:
+            print("Error while saving visit:", e)
+            success = False
+
+    return render(request, 'home/icons.html', {'success': success})
+
 # Notifications
 @login_required(login_url="/login/")
 def notifications_view(request):
@@ -342,7 +441,34 @@ def notifications_view(request):
 @login_required(login_url='/login/')
 def assign_tasks_view(request):
     users = User.objects.all()
-    return render(request, 'home/assign_tasks.html', {'users': users})
+    success = None
+    error = None
+
+    if request.method == "POST":
+        user_id = request.POST.get("assigned_to")
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+
+        if user_id and title:
+            try:
+                assigned_user = User.objects.get(id=user_id)
+                Task.objects.create(
+                    assigned_to=assigned_user,
+                    title=title,
+                    description=description or "",
+                )
+                success = "✅ Task assigned successfully!"
+            except Exception as e:
+                error = f"❌ Error assigning task: {e}"
+        else:
+            error = "❌ Please fill in all required fields."
+
+    return render(request, 'home/assign_tasks.html', {
+        'users': users,
+        'success': success,
+        'error': error,
+    })
+
 
 # Collection View
 @login_required(login_url='/login/')
@@ -418,15 +544,50 @@ def upload_collection(request):
 
     return render(request, 'home/upload_collection.html', {'results': results})
 
-# Display Brand Sales and Monthly Sales
+#Main Dashboard Display
 @login_required(login_url="/login/")
 def index(request):
     user = request.user
     full_name = f"{user.first_name} {user.last_name}".strip().lower()
 
+    # ✅ Invoices for this user
     invoices = Invoice.objects.filter(salesperson__iexact=full_name)
+    invoice_numbers = invoices.values_list('invoice_number', flat=True)
 
-    # Monthly sales aggregation
+    # 🌟 Top Clients
+    top_clients = (
+        invoices
+        .values('client')
+        .annotate(order_count=Count('invoice_number'), total_revenue=Sum('total'))
+        .order_by('-total_revenue')[:12]
+    )
+
+    # 🌟 Brand Sales
+    tracked_brands = [
+        'Schneider', 'Mennekes', 'Genebre', 'Baumer', 'Selec', 'Pilz', 'Hanyoung Nux', 'Emas',
+        'SKP', 'HPC', 'Trumen', 'ONKA', 'Foxtam', 'Hensel', 'DKM', 'Perry'
+    ]
+
+    items = (
+        InvoiceItem.objects
+        .filter(invoice__invoice_number__in=invoice_numbers)
+        .annotate(lower_brand=Lower('brand'))
+        .filter(lower_brand__in=[b.lower() for b in tracked_brands])
+        .annotate(
+            brand_revenue=ExpressionWrapper(
+                F('unit_price') * F('quantity'),
+                output_field=FloatField()
+            )
+        )
+        .values('lower_brand')
+        .annotate(total_sales=Sum('brand_revenue'))
+    )
+
+    brand_data_map = {entry['lower_brand']: float(entry['total_sales']) for entry in items}
+    brand_labels = tracked_brands
+    brand_data = [brand_data_map.get(b.lower(), 0.0) for b in tracked_brands]
+
+    # 🌟 Monthly Sales by Year
     monthly_sales = (
         invoices
         .annotate(year=ExtractYear('invoice_date'), month=ExtractMonth('invoice_date'))
@@ -441,59 +602,44 @@ def index(request):
         2023: [0] * 12,
     }
 
-    for sale in monthly_sales:
-        year = sale['year']
-        month = sale['month']
-        total = sale['total']
-        if year in sales_per_year:
+    for entry in monthly_sales:
+        year = entry['year']
+        month = entry['month']
+        total = entry['total']
+        if year in sales_per_year and 1 <= month <= 12:
             sales_per_year[year][month - 1] = float(total)
 
-    # KPI data
-    total_invoices = invoices.count()
-    total_amount = invoices.aggregate(Sum('total'))['total__sum'] or 0
-
-    top_clients = (
-        invoices
-        .values('client')
-        .annotate(order_count=Count('invoice_number'), total_revenue=Sum('total'))
-        .order_by('-total_revenue')[:12]
-    )
-
-    tracked_brands = [
-        'Schneider', 'Mennekes', 'Genebre', 'Baumer', 'Selec', 'Pilz', 'Hanyoung Nux', 'Emas',
-        'SKP', 'HPC', 'Trumen', 'ONKA', 'Foxtam', 'Hensel', 'DKM', 'Perry'
-    ]
-
-    invoice_numbers = invoices.values_list('invoice_number', flat=True)
-
-    # Accurate brand revenue using unit_price * quantity
-    items = (
-        InvoiceItem.objects
-        .filter(invoice__invoice_number__in=invoice_numbers)
-        .annotate(lower_brand=Lower('brand'))
-        .filter(lower_brand__in=[b.lower() for b in tracked_brands])
-        .annotate(
-            brand_revenue=ExpressionWrapper(F('unit_price') * F('quantity'), output_field=FloatField())
-        )
-        .values('lower_brand')
-        .annotate(total_sales=Sum('brand_revenue'))
-    )
-
-    brand_data_map = {entry['lower_brand']: float(entry['total_sales']) for entry in items}
-    brand_labels = tracked_brands
-    brand_data = [brand_data_map.get(brand.lower(), 0.0) for brand in tracked_brands]
+    # 📅 Tasks assigned to this user
+    user_tasks = Task.objects.filter(assigned_to=user).order_by('-created_at')
+    print(f"[DEBUG] {user.username} has {user_tasks.count()} tasks.")
 
     return render(request, "home/index.html", {
-        'total_invoices': total_invoices,
-        'total_amount': float(total_amount),
+        'total_invoices': invoices.count(),
+        'total_amount': float(invoices.aggregate(Sum('total'))['total__sum'] or 0),
         'top_clients': top_clients,
         'brand_labels': json.dumps(brand_labels),
         'brand_data': json.dumps(brand_data),
         'sales_per_year': json.dumps(sales_per_year),
+        'user_tasks': user_tasks,
         'is_salesperson': True,
     })
 
+@login_required
+def toggle_task_complete(request, task_id):
+    if request.method == "POST":
+        task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
+        task.is_completed = not task.is_completed
+        task.save()
+    return redirect("index")
 
+@login_required
+def delete_task(request, task_id):
+    if request.method == "POST":
+        task = get_object_or_404(Task, id=task_id, assigned_to=request.user)
+        task.delete()
+    return redirect("index")
+
+# Admin Panel Display
 @login_required(login_url="/login/")
 def admin_panel(request):
     user = request.user
@@ -546,13 +692,9 @@ def admin_panel(request):
     })
 
 # Helper: only allow admin users
-def admin_required(login_url=None):
-    return user_passes_test(lambda u: u.is_superuser, login_url=login_url)
-
 @login_required
-@admin_required(login_url='/login/')
 def edit_users(request):
-    users = User.objects.filter(is_superuser=False)
+    users = User.objects.filter(is_superuser=False).prefetch_related('userprofile')
 
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -566,14 +708,16 @@ def edit_users(request):
             user.save()
 
         elif 'upload' in request.POST:
+            print("Upload image triggered ✅")
             profile_image = request.FILES.get('profile_image')
-
             if profile_image:
                 profile, created = UserProfile.objects.get_or_create(user=user)
                 profile.profile_image = profile_image
                 profile.save()
 
+        # Refresh the user object before rendering
         return redirect('edit_users')
 
+    # Make sure to fetch latest user profile for all users
     return render(request, 'admin/edit_users.html', {'users': users})
 

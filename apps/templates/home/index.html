@@ -71,39 +71,38 @@
 {% block content %}
 <div class="content">
   <!-- Performance Chart -->
-  <!-- Performance Chart -->
-<div class="row">
-  <div class="col-12">
-    <div class="card card-chart">
-      <div class="card-header">
-        <div class="row">
-          <div class="col-sm-6 text-left">
-            <h5 class="card-category">Sales Overview</h5>
-            <h2 class="card-title">Monthly Sales</h2>
-          </div>
-          <div class="col-sm-6">
-            <div class="btn-group btn-group-toggle float-right" data-toggle="buttons" id="year-selector">
-              <label class="btn btn-sm btn-primary btn-simple active" id="btn-2025">
-                <input type="radio" name="year-options" autocomplete="off" checked> 2025
-              </label>
-              <label class="btn btn-sm btn-primary btn-simple" id="btn-2024">
-                <input type="radio" name="year-options" autocomplete="off"> 2024
-              </label>
-              <label class="btn btn-sm btn-primary btn-simple" id="btn-2023">
-                <input type="radio" name="year-options" autocomplete="off"> 2023
-              </label>
+  <div class="row">
+    <div class="col-12">
+      <div class="card card-chart">
+        <div class="card-header">
+          <div class="row">
+            <div class="col-sm-6 text-left">
+              <h5 class="card-category">Sales Overview</h5>
+              <h2 class="card-title">Monthly Sales</h2>
+            </div>
+            <div class="col-sm-6">
+              <div class="btn-group btn-group-toggle float-right" data-toggle="buttons" id="year-selector">
+                <label class="btn btn-sm btn-primary btn-simple active" id="btn-2025">
+                  <input type="radio" name="year-options" autocomplete="off" checked> 2025
+                </label>
+                <label class="btn btn-sm btn-primary btn-simple" id="btn-2024">
+                  <input type="radio" name="year-options" autocomplete="off"> 2024
+                </label>
+                <label class="btn btn-sm btn-primary btn-simple" id="btn-2023">
+                  <input type="radio" name="year-options" autocomplete="off"> 2023
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="card-body">
-        <div class="chart-area">
-          <canvas id="performanceChart" height="160"></canvas>
+        <div class="card-body">
+          <div class="chart-area">
+            <canvas id="performanceChart" height="160"></canvas>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
   <!-- Brand Revenue Chart -->
   <div class="row">
@@ -148,39 +147,41 @@
     </div>
   </div>
 
-  <!-- Tables -->
+  <!-- Task Table + Top Customers -->
   <div class="row align-items-stretch">
-    <!-- Task List -->
-    <div class="col-lg-6 col-md-12 d-flex">
-      <div class="card w-100 h-100 d-flex flex-column">
+    <div class="col-lg-6 col-md-12">
+      <div class="card w-100">
         <div class="card-header">
-          <h4 class="card-title">Tasks</h4>
+          <h4 class="card-title">Your Tasks</h4>
         </div>
-        <div class="card-body flex-grow-1">
-          <div class="table-full-width table-responsive h-100">
+        <div class="card-body">
+          <div class="table-responsive">
             <table class="table">
               <tbody>
-                <!-- Example Task -->
+                {% for task in user_tasks %}
                 <tr>
                   <td>
-                    <div class="form-check">
-                      <label class="form-check-label">
-                        <input class="form-check-input" type="checkbox">
-                        <span class="form-check-sign"><span class="check"></span></span>
-                      </label>
-                    </div>
+                    <form method="post" action="{% url 'toggle_task_complete' task.id %}">
+                      {% csrf_token %}
+                      <input type="checkbox" onchange="this.form.submit()" {% if task.is_completed %}checked{% endif %}>
+                    </form>
                   </td>
                   <td>
-                    <p class="title">Update the Documentation</p>
-                    <p class="text-muted">Dwuamish Head, Seattle, WA 8:47 AM</p>
+                    <p class="title">{{ task.title }}</p>
+                    <p class="text-muted">{{ task.description }}</p>
                   </td>
-                  <td class="td-actions text-right">
-                    <button type="button" rel="tooltip" title="Edit Task" class="btn btn-link">
-                      <i class="tim-icons icon-pencil"></i>
-                    </button>
+                  <td>
+                    <form method="post" action="{% url 'delete_task' task.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-link text-danger" title="Delete Task">
+                        <i class="tim-icons icon-simple-remove"></i>
+                      </button>
+                    </form>
                   </td>
                 </tr>
-                <!-- Add more tasks dynamically if needed -->
+                {% empty %}
+                <tr><td colspan="3" class="text-muted text-center">No tasks assigned.</td></tr>
+                {% endfor %}                
               </tbody>
             </table>
           </div>

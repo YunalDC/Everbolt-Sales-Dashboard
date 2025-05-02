@@ -3,10 +3,9 @@ from apps.home import views
 from apps.home.views import mark_visit
 from django.conf import settings
 from django.conf.urls.static import static
+from .views import upload_customers
 
 urlpatterns = [
-
-    # The home page
     path('', views.index, name='home'),
     path("mark-visit/", mark_visit, name="mark_visit"),
     path('admin_panel.html', views.admin_panel, name='admin_panel'),
@@ -20,8 +19,16 @@ urlpatterns = [
     path("products.html/", views.display_products, name="display_products"),
     path('collections/', views.view_collections, name='view_collections'),
     path('edit_users/', views.edit_users, name='edit_users'), 
+    path('upload-customers/', upload_customers, name='upload_customers'),
+    path('task/<int:task_id>/complete/', views.toggle_task_complete, name='toggle_task_complete'),
+    path('task/<int:task_id>/delete/', views.delete_task, name='delete_task'),
+    path("autocomplete-company/", views.autocomplete_company, name="autocomplete_company"),
+]
 
-    # Matches any html file
-    re_path(r'^.*\.*', views.pages, name='pages'),
-
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# Serve media and static files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+    # Place catch-all only AFTER all specific routes
+    urlpatterns += [re_path(r'^.*\.*', views.pages, name='pages')]

@@ -1,0 +1,122 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Upload Customers{% endblock %}
+
+{% block stylesheets %}
+<style>
+  .main-dashboard-container {
+    max-width: 1100px;
+    margin-left: 250px;
+    padding: 4rem 2rem;
+  }
+
+  .upload-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.03);
+    padding: 2rem;
+  }
+
+  .upload-heading {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #efcc00;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .btn-yellow {
+    background-color: #efcc00;
+    color: black;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    border-radius: 5px;
+    border: none;
+  }
+
+  .btn-yellow:hover {
+    background-color: #d4b700;
+    color: white;
+  }
+
+  .btn-back {
+    background-color: #6c757d;
+    color: white;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-back:hover {
+    background-color: #5a6268;
+    color: white;
+  }
+
+  .form-label {
+    font-weight: 600;
+  }
+
+  .results-list {
+    margin-top: 1.5rem;
+  }
+
+  .results-list li {
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .main-dashboard-container {
+      margin-left: 0;
+      padding: 1.5rem 1rem;
+    }
+
+    .upload-heading {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="main-dashboard-container">
+  <div class="upload-card">
+
+    <a href="{% url 'admin_panel' %}" class="btn-back">← Back to Admin Panel</a>
+
+    <h2 class="upload-heading">📤 Upload Customers</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Excel Upload -->
+    <form method="post" enctype="multipart/form-data" class="mb-4">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="excel_file" class="form-label">📥 Upload Excel File (.xlsx)</label>
+        <input type="file" name="excel_file" accept=".xlsx" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-yellow">Upload Customers</button>
+    </form>
+
+    <!-- Results -->
+    {% if results %}
+    <ul class="results-list list-group mt-4">
+      {% for result in results %}
+      <li class="list-group-item">{{ result }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock content %}

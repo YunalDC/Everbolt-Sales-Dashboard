@@ -8,6 +8,19 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+# Customer Model
+class Customer(models.Model):
+    display_name = models.CharField(max_length=255)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)  # ✅ Now allows null
+    phone = models.CharField(max_length=20, null=True, blank=True)  # ✅ Now allows null
+    salesperson = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return self.display_name
+
+# Customer Order Model
 class CustomerOrder(models.Model):
     customer_name = models.CharField(max_length=255)
     order_count = models.PositiveIntegerField()
@@ -91,5 +104,14 @@ class AgedReceivable(models.Model):
     def __str__(self):
         return f"{self.customer_name} - {self.salesperson}"
 
+class Task(models.Model):
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({'Done' if self.is_completed else 'Pending'})"
     
 
