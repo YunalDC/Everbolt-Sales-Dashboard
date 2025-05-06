@@ -6,11 +6,6 @@ import openpyxl
 
 from .models import Visit, Invoice, InvoiceItem, Product, AgedReceivable
 
-# Register Visit model
-@admin.register(Visit)
-class VisitAdmin(admin.ModelAdmin):
-    list_display = ('visit_date', 'sales_officer','company')
-
 # Inline for Invoice Items
 class InvoiceItemInline(admin.TabularInline):
     model = InvoiceItem
@@ -98,3 +93,19 @@ class AgedReceivableAdmin(admin.ModelAdmin):
     list_filter = ('salesperson', 'last_invoice_date')
     search_fields = ('customer_name', 'salesperson')
     ordering = ('-last_invoice_date',)
+
+# Visit Data Admin Display
+@admin.register(Visit)
+class VisitAdmin(admin.ModelAdmin):
+    list_display = (
+        'visit_date',
+        'sales_officer',
+        'company',
+        'visit_type',
+        'visit_details',
+        'remarks',
+        'submitted_at',
+    )
+    list_filter = ('sales_officer', 'visit_type', 'visit_date')
+    search_fields = ('sales_officer', 'company', 'visit_details', 'remarks')
+    ordering = ('-visit_date',)

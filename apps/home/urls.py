@@ -4,6 +4,7 @@ from apps.home.views import mark_visit
 from django.conf import settings
 from django.conf.urls.static import static
 from .views import upload_customers
+from .views import import_visits_from_google_sheet
 
 urlpatterns = [
     path('', views.index, name='home'),
@@ -23,6 +24,7 @@ urlpatterns = [
     path('task/<int:task_id>/complete/', views.toggle_task_complete, name='toggle_task_complete'),
     path('task/<int:task_id>/delete/', views.delete_task, name='delete_task'),
     path("autocomplete-company/", views.autocomplete_company, name="autocomplete_company"),
+    path('sales-visits/', views.view_sales_visits, name='sales_visits'),
 ]
 
 # Serve media and static files in development

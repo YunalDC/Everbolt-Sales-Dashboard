@@ -23,6 +23,8 @@ from .models import UserProfile, Task, Customer
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 import requests
 import fitz  
@@ -143,7 +145,6 @@ def upload_customers(request):
     return render(request, 'home/upload_customers.html')
 
 # Visit Company Display
-
 @login_required
 def autocomplete_company(request):
     query = request.GET.get('q', '')
@@ -381,7 +382,7 @@ def upload_products(request):
 
     return render(request, 'home/upload_product.html', {'results': results})
 
-# Mark Visit 
+# Mark Visit Concept
 @csrf_exempt
 @login_required(login_url="/login/")
 def mark_visit(request):
@@ -407,21 +408,28 @@ def mark_visit(request):
                 submitted_at=now()
             )
 
-            # Prepare data for Google Script
+            # ✅ Define script_url before using it
+            script_url = 'https://script.google.com/macros/s/AKfycbw_fZerRzYrYU63VYwYJDF8rCdSv8NiQUQE1w_ptsJPsau51hk85SMXgILfF73LXZqO/exec'
+
             payload = {
-                'visit_date': visit_date,
-                'sales_officer': sales_officer,
-                'company': company,
-                'visit_type': visit_type,
-                'visit_details': visit_details,
+                'date': visit_date,
+                'salesOfficerName': sales_officer,
+                'companyName': company,
+                'visitType': visit_type,
+                'visitDetails': visit_details,
                 'remarks': remarks
             }
 
-            # Send to Google Apps Script
-            script_url = 'https://script.google.com/macros/s/AKfycbziaKZFcxY2Y7rqEBNBCgCc_EXDWN6ZZtJXk8lz7e5D8cgmUqz0qxl90BG411lf5fOE/exec'
-            response = requests.post(script_url, data=payload, timeout=5)
+            headers = {'Content-Type': 'application/json'}
 
-            # Optional logging
+            response = requests.post(
+                script_url,
+                json=payload,
+                headers=headers,
+                timeout=5
+            )
+
+            print(f"[INFO] Payload Sent:\n{json.dumps(payload, indent=2)}")
             print(f"[INFO] Google Sheet response: {response.status_code} - {response.text}")
 
             success = response.status_code == 200
@@ -493,32 +501,41 @@ def upload_collection(request):
             wb = openpyxl.load_workbook(excel_file)
             sheet = wb.active
 
-            headers = [cell.value for cell in sheet[1]]
-            header_map = {str(header).strip().lower(): idx for idx, header in enumerate(headers)}
+            # Read header row
+            headers = [str(cell.value).strip().lower() for cell in sheet[1]]
+            header_map = {header: idx for idx, header in enumerate(headers)}
 
-            required_cols = ['customer', 'sales person', '1-30', '31-60', '61-90', '91-120', 'older', 'total']
-            if not all(col in header_map for col in required_cols):
-                messages.error(request, "❌ Excel is missing required columns.")
+            # Expected columns (must match Excel headers exactly)
+            required_cols = [
+                'customer_name', 'salesperson',
+                'days_1_30', 'days_31_60', 'days_61_90', 'days_91_120',
+                'older', 'total'
+            ]
+
+            # Check for missing columns
+            missing = [col for col in required_cols if col not in header_map]
+            if missing:
+                messages.error(request, f"❌ Missing required columns: {', '.join(missing)}")
                 return render(request, 'home/upload_collection.html')
 
-            AgedReceivable.objects.all().delete()  # Optional: Clear old data
+            # Optional: Clear old records
+            AgedReceivable.objects.all().delete()
 
             for row in sheet.iter_rows(min_row=2, values_only=True):
                 try:
-                    customer_name = row[header_map['customer']]
-                    salesperson = row[header_map['sales person']]
-
-                    days_1_30 = row[header_map['1-30']] or 0
-                    days_31_60 = row[header_map['31-60']] or 0
-                    days_61_90 = row[header_map['61-90']] or 0
-                    days_91_120 = row[header_map['91-120']] or 0
+                    customer_name = row[header_map['customer_name']]
+                    salesperson = row[header_map['salesperson']]
+                    days_1_30 = row[header_map['days_1_30']] or 0
+                    days_31_60 = row[header_map['days_31_60']] or 0
+                    days_61_90 = row[header_map['days_61_90']] or 0
+                    days_91_120 = row[header_map['days_91_120']] or 0
                     older = row[header_map['older']] or 0
                     total = row[header_map['total']] or 0
 
-                    # Optional date field
+                    # Handle optional date field
                     last_invoice_date = None
-                    if 'invoice date' in header_map:
-                        date_val = row[header_map['invoice date']]
+                    if 'last_invoice_date' in header_map:
+                        date_val = row[header_map['last_invoice_date']]
                         if isinstance(date_val, datetime):
                             last_invoice_date = date_val.date()
 
@@ -533,7 +550,6 @@ def upload_collection(request):
                         total=total,
                         last_invoice_date=last_invoice_date
                     )
-
                 except Exception as e:
                     results.append(f"❌ Failed to insert row: {e}")
 
@@ -721,3 +737,115 @@ def edit_users(request):
     # Make sure to fetch latest user profile for all users
     return render(request, 'admin/edit_users.html', {'users': users})
 
+# Visit Data Extraction
+SPREADSHEET_ID = "1dxsrfcfQX8YFgbKF5lfxu2Kt-XkEli5BALxlZVE6dWc"
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SERVICE_ACCOUNT_FILE = 'secrets/rugged-truck-456310-h9-12dff1358d68.json'
+
+def import_visits_from_google_sheet(request):
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    service = build('sheets', 'v4', credentials=creds)
+
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+    sheet_titles = [s['properties']['title'] for s in sheet_metadata['sheets']]
+
+    imported = 0
+    visit_list = []
+
+    for title in sheet_titles:
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{title}!A2:F"
+        ).execute()
+        rows = result.get('values', [])
+
+        for row in rows:
+            if len(row) < 6:
+                continue
+
+            try:
+                visit_date = datetime.strptime(row[0], '%Y-%m-%d').date()
+            except:
+                continue
+
+            visit, created = Visit.objects.get_or_create(
+                visit_date=visit_date,
+                sales_officer=row[1],
+                company=row[2],
+                visit_type=row[3],
+                visit_details=row[4],
+                remarks=row[5]
+            )
+            if created:
+                imported += 1
+            visit_list.append(visit)
+
+    return render(request, "home/import_result.html", {
+        "imported_count": imported,
+        "sheets_checked": sheet_titles,
+        "visits": visit_list
+    })
+
+# Visits Dashboard
+def visit_dashboard(request):
+    query = request.GET.get("q", "")
+    start_date = request.GET.get("start")
+    end_date = request.GET.get("end")
+
+    visits = Visit.objects.all()
+
+    if query:
+        visits = visits.filter(
+            Q(sales_officer__icontains=query) |
+            Q(company__icontains=query) |
+            Q(visit_type__icontains=query)
+        )
+
+    if start_date:
+        visits = visits.filter(visit_date__gte=start_date)
+    if end_date:
+        visits = visits.filter(visit_date__lte=end_date)
+
+    visits = visits.order_by('-visit_date')  # Newest to oldest
+    paginator = Paginator(visits, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, 'home/visit_dashboard.html', {
+        'page_obj': page_obj,
+        'query': query,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+
+# Sales Visits Display
+def view_sales_visits(request):
+    query = request.GET.get('q', '').strip()
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+
+    visits = Visit.objects.all().order_by('-visit_date')
+
+    if query:
+        visits = visits.filter(
+            models.Q(sales_officer__icontains=query) |
+            models.Q(company__icontains=query) |
+            models.Q(visit_type__icontains=query)
+        )
+
+    if start_date:
+        visits = visits.filter(visit_date__gte=start_date)
+    if end_date:
+        visits = visits.filter(visit_date__lte=end_date)
+
+    paginator = Paginator(visits, 20)  # Show 20 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'home/sales_visits.html', {
+        'page_obj': page_obj,
+        'query': query,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+    

@@ -1,0 +1,194 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block stylesheets %}
+<style>
+  .visit-wrapper {
+    padding: 1rem 1rem 1rem 280px;  /* Left space for sidebar, bottom margin */
+    margin-top: 4rem;              /* Push content down */
+    margin-right: 5rem;            /* Right space from edge */
+    max-width: 1450px;
+    transition: all 0.3s ease;
+  }
+
+  .visit-wrapper h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #0f172a;
+  }
+
+  .visit-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+
+  .visit-form input,
+  .visit-form button {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 1rem;
+  }
+
+  .visit-form input {
+    flex: 1;
+    min-width: 160px;
+    background-color: #ffffff;
+    color: #1e293b;
+  }
+
+  .visit-form button {
+    background-color: #22c55e;
+    color: #ffffff;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .visit-form button:hover {
+    background-color: #16a34a;
+  }
+
+  .visit-card-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .visit-card-table thead {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .visit-card-table th,
+  .visit-card-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.95rem;
+  }
+
+  .visit-card-table tbody tr:hover {
+    background-color: #f9fafb;
+    transition: background 0.3s ease;
+  }
+
+  .pagination {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    font-size: 0.95rem;
+  }
+
+  .pagination a {
+    color: #22c55e;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .pagination a:hover {
+    text-decoration: underline;
+  }
+
+  .visit-empty {
+    padding: 20px;
+    text-align: center;
+    color: #9ca3af;
+  }
+
+  /* Responsive tweak for mobile/tablets */
+  @media screen and (max-width: 768px) {
+    .visit-wrapper {
+      padding: 2rem 1rem;
+      margin-right: 1rem;
+      margin-left: 1rem;
+    }
+
+    .visit-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .visit-form input,
+    .visit-form button {
+      width: 100%;
+    }
+
+    .visit-card-table th,
+    .visit-card-table td {
+      padding: 10px 12px;
+    }
+  }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="visit-wrapper">
+  <h2>Sales Visits</h2>
+
+  <form method="get" class="visit-form">
+    <input type="text" name="q" placeholder="Search by officer, company, or type" value="{{ query }}">
+    <input type="date" name="start" value="{{ start_date }}">
+    <input type="date" name="end" value="{{ end_date }}">
+    <button type="submit">Filter</button>
+  </form>
+
+  <div class="overflow-x-auto">
+    <table class="visit-card-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Sales Officer</th>
+          <th>Company</th>
+          <th>Visit Type</th>
+          <th>Details</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if page_obj and page_obj.object_list %}
+          {% for visit in page_obj %}
+            <tr>
+              <td>{{ visit.visit_date }}</td>
+              <td>{{ visit.sales_officer }}</td>
+              <td>{{ visit.company }}</td>
+              <td>{{ visit.visit_type }}</td>
+              <td>{{ visit.visit_details }}</td>
+              <td>{{ visit.remarks }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="visit-empty">No visits found.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}">« Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ query }}">Next »</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}

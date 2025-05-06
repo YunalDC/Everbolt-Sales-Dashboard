@@ -1,0 +1,78 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Sales Visits</h2>
+
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search by officer, company, or type" value="{{ query }}">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="start" class="form-control" value="{{ start_date }}">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="end" class="form-control" value="{{ end_date }}">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Date</th>
+          <th>Sales Officer</th>
+          <th>Company</th>
+          <th>Visit Type</th>
+          <th>Details</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for visit in page_obj %}
+        <tr>
+          <td>{{ visit.visit_date }}</td>
+          <td>{{ visit.sales_officer }}</td>
+          <td>{{ visit.company }}</td>
+          <td>{{ visit.visit_type }}</td>
+          <td>{{ visit.visit_details }}</td>
+          <td>{{ visit.remarks }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center">No visits found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&start={{ start_date }}&end={{ end_date }}">Previous</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&start={{ start_date }}&end={{ end_date }}">Next</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endblock %}

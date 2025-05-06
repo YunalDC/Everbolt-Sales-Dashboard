@@ -6,10 +6,10 @@
 {% block stylesheets %}
 <style>
   .dashboard-container {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 3rem 2rem 1rem;
-    margin-left: 240px;
+    padding: 3rem 3rem 2rem 280px;
+    margin-top: 2rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .dashboard-title {
@@ -20,9 +20,18 @@
     color: #333;
   }
 
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #087A38;
+    margin: 2.5rem 0 1.2rem;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 0.4rem;
+  }
+
   .admin-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.5rem;
   }
 
@@ -39,14 +48,14 @@
     transform: translateY(-4px);
   }
 
-  .card-purple    { background: #c400c4; }
-  .card-green     { background: #0B9444; }
-  .card-orange    { background: #f98e4b; }
-  .card-pink      { background: #ff5e9c; }
-  .card-red       { background: #ff0000; }
-  .card-blue      { background: #007bff; }
-  .card-yellow      { background: #efcc00; }
-  .card-black      { background: #000; }
+  .card-purple { background: #c400c4; }
+  .card-green  { background: #0B9444; }
+  .card-orange { background: #f98e4b; }
+  .card-pink   { background: #ff5e9c; }
+  .card-red    { background: #ff0000; }
+  .card-blue   { background: #007bff; }
+  .card-yellow { background: #efcc00; }
+  .card-black  { background: #000; }
 
   .admin-card-title {
     font-size: 1.1rem;
@@ -71,7 +80,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
-    margin-top: 2rem;
+    margin-top: 1rem;
     background-color: #fff;
     border-radius: 8px;
     overflow: hidden;
@@ -92,18 +101,45 @@
     border-bottom: 1px solid #eee;
   }
 
-  .brand-sales-table tbody tr:hover {
-    background-color: #f9f9f9;
-  }
-
   .brand-sales-table tbody td:first-child {
     font-weight: 600;
     text-align: left;
   }
 
+  .brand-sales-table tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .visit-section,
+  .report-section {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .action-button {
+    margin-top: 1rem;
+    display: inline-block;
+    padding: 14px 28px;
+    background: linear-gradient(to right, #22c55e, #16a34a);
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .action-button:hover {
+    background: linear-gradient(to right, #16a34a, #0f9d58);
+    transform: scale(1.05);
+  }
+
   @media (max-width: 768px) {
     .dashboard-container {
       padding: 1.5rem 1rem;
+      margin-left: 0;
     }
     .dashboard-title {
       font-size: 1.5rem;
@@ -115,100 +151,113 @@
 {% block content %}
 <div class="dashboard-container">
   <h2 class="dashboard-title">🛠 Admin Dashboard</h2>
-  <div class="admin-grid">
-    <div class="admin-card card-purple">
-      <div class="admin-card-title">📤 Upload Invoices</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_invoice' %}">Go to Upload</a>
-        <i class="fas fa-upload"></i>
+
+  <div>
+    <div class="section-title">📁 Data Uploading</div>
+    <div class="admin-grid">
+      <div class="admin-card card-purple">
+        <div class="admin-card-title">📤 Upload Invoices</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'upload_invoice' %}">Go to Upload</a>
+          <i class="fas fa-upload"></i>
+        </div>
+      </div>
+
+      <div class="admin-card card-red">
+        <div class="admin-card-title">📤 Upload Collection</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'upload_collection' %}">Go to Collection</a>
+          <i class="fas fa-upload"></i>
+        </div>
+      </div>
+
+      <div class="admin-card card-orange">
+        <div class="admin-card-title">📤 Upload Visits</div>
+        <div class="admin-card-footer">
+          <a href="#">Go to Visits</a>
+          <i class="fas fa-bell"></i>
+        </div>
+      </div>
+
+      <div class="admin-card card-green">
+        <div class="admin-card-title">⚙️ Manage Products</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'upload_product' %}">Go to Products</a>
+          <i class="fas fa-cogs"></i>
+        </div>
+      </div>
+
+      <div class="admin-card card-yellow">
+        <div class="admin-card-title">⚙️ Upload Customers</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'upload_customers' %}">Go to Customers</a>
+          <i class="fas fa-cogs"></i>
+        </div>
+      </div>
+
+      <div class="admin-card card-black">
+        <div class="admin-card-title">⚙️ Upload Brands</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'upload_customers' %}">Go to Brands</a>
+          <i class="fas fa-cogs"></i>
+        </div>
       </div>
     </div>
 
-    <div class="admin-card card-green">
-      <div class="admin-card-title">⚙️ Manage Products</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_product' %}">Go to Collection</a>
-        <i class="fas fa-cogs"></i>
+    <div class="section-title">👥 User & Task Management</div>
+    <div class="admin-grid">
+      <div class="admin-card card-blue">
+        <div class="admin-card-title">🛠 Edit User Profiles</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'edit_users' %}">Edit</a>
+          <i class="fas fa-user-edit"></i>
+        </div>
       </div>
-    </div>
 
-    <div class="admin-card card-red">
-      <div class="admin-card-title">📤 Upload Collection</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_collection' %}">Go to Collection</a>
-        <i class="fas fa-upload"></i>
-      </div>
-    </div>
-
-    <div class="admin-card card-orange">
-      <div class="admin-card-title">🔔 Post Notification</div>
-      <div class="admin-card-footer">
-        <a href="#">Post</a>
-        <i class="fas fa-bell"></i>
-      </div>
-    </div>
-
-    <div class="admin-card card-blue">
-      <div class="admin-card-title">🛠 Edit User Profiles</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'edit_users' %}">Edit</a>
-        <i class="fas fa-user-edit"></i>
-      </div>
-    </div>
-
-    <div class="admin-card card-pink">
-      <div class="admin-card-title">📝 Assign Tasks</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'assign_tasks' %}">Assign</a>
-        <i class="fas fa-tasks"></i>
-      </div>
-    </div>
-
-    <div class="admin-card card-yellow">
-      <div class="admin-card-title">⚙️ Upload Customers</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_customers' %}">Go to Customers</a>
-        <i class="fas fa-cogs"></i>
-      </div>
-    </div>
-
-    <div class="admin-card card-black">
-      <div class="admin-card-title">⚙️ Upload Brands</div>
-      <div class="admin-card-footer">
-        <a href="{% url 'upload_customers' %}">Go to Brands</a>
-        <i class="fas fa-cogs"></i>
+      <div class="admin-card card-pink">
+        <div class="admin-card-title">📝 Assign Tasks</div>
+        <div class="admin-card-footer">
+          <a href="{% url 'assign_tasks' %}">Assign</a>
+          <i class="fas fa-tasks"></i>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-{% if show_brand_sales %}
-<div class="dashboard-container" style="margin-top: 3rem;">
-  <h2 class="dashboard-title">📊 Brand Sales Report (Salespersons)</h2>
-  <div style="overflow-x: auto;">
-    <table class="brand-sales-table">
-      <thead>
-        <tr>
-          <th>Salesperson</th>
-          {% for brand in brand_sales_data.0.brand_sales.keys %}
-            <th>{{ brand }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for record in brand_sales_data %}
-          {% if record.salesperson %}
+  <div class="visit-section">
+    <div class="section-title">🗂 Sales Visits Overview</div>
+    <a href="{% url 'sales_visits' %}" class="action-button">Go to Sales Visits</a>
+  </div>
+
+  {% if show_brand_sales %}
+  <div class="report-section">
+    <div class="section-title">📊 Brand Sales Report</div>
+    <a href="#" class="action-button">Generate Full Report</a>
+    <div style="overflow-x: auto; margin-top: 2rem;">
+      <table class="brand-sales-table">
+        <thead>
           <tr>
-            <td>{{ record.salesperson }}</td>
-            {% for sales in record.brand_sales.values %}
-              <td>LKR {{ sales|floatformat:2 }}</td>
+            <th>Salesperson</th>
+            {% for brand in brand_sales_data.0.brand_sales.keys %}
+              <th>{{ brand }}</th>
             {% endfor %}
           </tr>
-          {% endif %}
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for record in brand_sales_data %}
+            {% if record.salesperson %}
+            <tr>
+              <td>{{ record.salesperson }}</td>
+              {% for sales in record.brand_sales.values %}
+                <td>LKR {{ sales|floatformat:2 }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+  {% endif %}
 </div>
-{% endif %}
-{% endblock %}
+{% endblock content %}
